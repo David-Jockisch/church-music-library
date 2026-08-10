@@ -1,0 +1,9 @@
+{
+  "name": "Church Music Library",
+  "short_name": "Music Library",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f7f9",
+  "theme_color": "#17324d",
+  "description": "Search, view, and practice church sheet music."
+}

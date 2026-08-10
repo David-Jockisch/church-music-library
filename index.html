@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#17324d" />
+  <meta name="description" content="Search, view, and practice church sheet music." />
+
+  <title>Church Music Library</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div>
+        <p class="eyebrow">Worship Resources</p>
+        <h1>Church Music Library</h1>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="libraryView" class="view">
+      <div class="search-wrap">
+        <label class="sr-only" for="searchInput">Search music library</label>
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="Search songs, composers, tags..."
+          autocomplete="off"
+        />
+      </div>
+
+      <nav id="alphabetNav" class="alphabet-nav" aria-label="Browse alphabetically"></nav>
+
+      <div class="library-toolbar">
+        <p id="resultCount"></p>
+      </div>
+
+      <div id="songList" class="song-list"></div>
+
+      <div id="emptyState" class="empty-state hidden">
+        <h2>No songs found</h2>
+        <p>Try another title, composer, or tag.</p>
+      </div>
+    </section>
+
+    <section id="songView" class="view song-view hidden">
+      <div class="song-view-header">
+        <button id="backButton" class="text-button" type="button">← Library</button>
+
+        <div class="song-title-block">
+          <p id="songMeta" class="song-meta"></p>
+          <h2 id="songTitle"></h2>
+        </div>
+
+        <a
+          id="openOriginalButton"
+          class="open-original-button hidden"
+          href="#"
+          target="_blank"
+          rel="noopener"
+        >
+          Open Original
+        </a>
+      </div>
+
+      <div id="resourceActions" class="resource-actions"></div>
+
+      <section id="documentPanel" class="document-panel">
+        <div id="documentEmpty" class="document-empty">
+          <h3>No document selected</h3>
+          <p>Select a resource above to view it.</p>
+        </div>
+
+        <div id="pdfStatus" class="pdf-status hidden">Loading sheet music…</div>
+
+        <div
+          id="pdfViewer"
+          class="pdf-viewer hidden"
+          aria-label="Sheet music viewer"
+        ></div>
+
+        <div id="wordNotice" class="word-notice hidden">
+          <h3>Word document</h3>
+          <p>
+            Web browsers do not reliably display DOCX files inline. For the best
+            one-device practice experience, add a PDF copy of the document.
+          </p>
+          <a id="wordOpenLink" class="primary-button" href="#" target="_blank" rel="noopener">
+            Open / Download Word File
+          </a>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <aside id="audioDock" class="audio-dock hidden" aria-label="Practice audio player">
+    <div class="audio-dock-info">
+      <span class="audio-label">Practice Audio</span>
+      <strong id="audioTrackTitle"></strong>
+    </div>
+
+    <audio id="audioPlayer" controls preload="metadata"></audio>
+  </aside>
+
+  <!--
+    PDF.js renders the sheet music directly into our page.
+    The "Open Original" button still opens the browser's native PDF viewer
+    for printing, downloading, sharing, etc.
+  -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+  </script>
+
+  <script src="js/music-library.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
