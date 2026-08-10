@@ -27,6 +27,14 @@ const audioDock = document.getElementById("audioDock");
 const audioTrackTitle = document.getElementById("audioTrackTitle");
 const audioPlayer = document.getElementById("audioPlayer");
 
+const rewindButton = document.getElementById("rewindButton");
+const playPauseButton = document.getElementById("playPauseButton");
+const playPauseIcon = document.getElementById("playPauseIcon");
+const forwardButton = document.getElementById("forwardButton");
+const audioSeek = document.getElementById("audioSeek");
+const currentTime = document.getElementById("currentTime");
+const durationTime = document.getElementById("durationTime");
+
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 let activePdfDocument = null;
@@ -311,13 +319,88 @@ function openDocument(resource, button) {
   window.open(resource.file, "_blank", "noopener");
 }
 
+
+function formatAudioTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+
+  const wholeSeconds = Math.floor(seconds);
+  const minutes = Math.floor(wholeSeconds / 60);
+  const remainingSeconds = wholeSeconds % 60;
+
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function updatePlayPauseButton() {
+  const isPlaying = !audioPlayer.paused && !audioPlayer.ended;
+
+  playPauseIcon.textContent = isPlaying ? "❚❚" : "▶";
+  playPauseButton.setAttribute(
+    "aria-label",
+    isPlaying ? "Pause" : "Play"
+  );
+}
+
+function updateAudioProgress() {
+  const duration = audioPlayer.duration;
+  const position = audioPlayer.currentTime;
+
+  currentTime.textContent = formatAudioTime(position);
+  durationTime.textContent = formatAudioTime(duration);
+
+  if (Number.isFinite(duration) && duration > 0) {
+    audioSeek.value = String((position / duration) * 100);
+    audioSeek.disabled = false;
+  } else {
+    audioSeek.value = "0";
+    audioSeek.disabled = true;
+  }
+}
+
+function resetPracticePlayerUi() {
+  audioSeek.value = "0";
+  audioSeek.disabled = true;
+
+  currentTime.textContent = "0:00";
+  durationTime.textContent = "0:00";
+
+  updatePlayPauseButton();
+}
+
+async function toggleAudioPlayback() {
+  if (!audioPlayer.src) return;
+
+  try {
+    if (audioPlayer.paused || audioPlayer.ended) {
+      await audioPlayer.play();
+    } else {
+      audioPlayer.pause();
+    }
+  } catch (error) {
+    console.error("Audio playback failed:", error);
+  }
+}
+
+function skipAudio(seconds) {
+  if (!Number.isFinite(audioPlayer.duration)) return;
+
+  const nextTime = Math.min(
+    Math.max(audioPlayer.currentTime + seconds, 0),
+    audioPlayer.duration
+  );
+
+  audioPlayer.currentTime = nextTime;
+  updateAudioProgress();
+}
+
 function setAudio(song) {
   const tracks = song.audio || [];
 
+  audioPlayer.pause();
+
   if (!tracks.length) {
-    audioPlayer.pause();
     audioPlayer.removeAttribute("src");
     audioPlayer.load();
+    resetPracticePlayerUi();
 
     audioDock.classList.add("hidden");
     songView.classList.remove("has-audio");
@@ -329,6 +412,9 @@ function setAudio(song) {
 
   audioTrackTitle.textContent = `${song.title} — ${track.label}`;
   audioPlayer.src = track.file;
+  audioPlayer.load();
+
+  resetPracticePlayerUi();
 
   audioDock.classList.remove("hidden");
   songView.classList.add("has-audio");
@@ -652,6 +738,41 @@ window.addEventListener("resize", () => {
     const resource = activePdfResource;
     renderPdfPages(resource);
   }, 250);
+});
+
+
+/* ==========================================================
+   PRACTICE AUDIO CONTROLS
+   ========================================================== */
+
+playPauseButton.addEventListener("click", toggleAudioPlayback);
+
+rewindButton.addEventListener("click", () => {
+  skipAudio(-10);
+});
+
+forwardButton.addEventListener("click", () => {
+  skipAudio(10);
+});
+
+audioSeek.addEventListener("input", () => {
+  if (!Number.isFinite(audioPlayer.duration)) return;
+
+  const percent = Number(audioSeek.value) / 100;
+  audioPlayer.currentTime = percent * audioPlayer.duration;
+
+  updateAudioProgress();
+});
+
+audioPlayer.addEventListener("loadedmetadata", updateAudioProgress);
+audioPlayer.addEventListener("durationchange", updateAudioProgress);
+audioPlayer.addEventListener("timeupdate", updateAudioProgress);
+audioPlayer.addEventListener("play", updatePlayPauseButton);
+audioPlayer.addEventListener("pause", updatePlayPauseButton);
+
+audioPlayer.addEventListener("ended", () => {
+  updatePlayPauseButton();
+  updateAudioProgress();
 });
 
 /* ==========================================================

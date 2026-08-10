@@ -128,7 +128,57 @@
       <strong id="audioTrackTitle"></strong>
     </div>
 
-    <audio id="audioPlayer" controls preload="metadata"></audio>
+    <div class="practice-player">
+      <div class="practice-controls">
+        <button
+          id="rewindButton"
+          class="practice-skip-button"
+          type="button"
+          aria-label="Rewind 10 seconds"
+        >
+          <span class="skip-icon">↶</span>
+          <span class="skip-value">10</span>
+        </button>
+
+        <button
+          id="playPauseButton"
+          class="practice-play-button"
+          type="button"
+          aria-label="Play"
+        >
+          <span id="playPauseIcon" aria-hidden="true">▶</span>
+        </button>
+
+        <button
+          id="forwardButton"
+          class="practice-skip-button"
+          type="button"
+          aria-label="Forward 10 seconds"
+        >
+          <span class="skip-value">10</span>
+          <span class="skip-icon">↷</span>
+        </button>
+      </div>
+
+      <div class="practice-progress-row">
+        <span id="currentTime" class="practice-time">0:00</span>
+
+        <input
+          id="audioSeek"
+          class="practice-seek"
+          type="range"
+          min="0"
+          max="100"
+          value="0"
+          step="0.1"
+          aria-label="Audio position"
+        />
+
+        <span id="durationTime" class="practice-time">0:00</span>
+      </div>
+    </div>
+
+    <audio id="audioPlayer" preload="metadata"></audio>
   </aside>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>

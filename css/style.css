@@ -927,3 +927,336 @@ main {
     font-size: 0.62rem;
   }
 }
+
+
+/* ==========================================================
+   PRACTICE CONTROLS UPDATE
+   Larger touch targets with minimal loss of document space.
+   ========================================================== */
+
+:root {
+  --audio-height: 132px;
+}
+
+/* Slightly larger general touch targets. */
+.alphabet-button {
+  min-width: 40px;
+  height: 40px;
+  font-size: 0.86rem;
+}
+
+.text-button {
+  min-height: 42px;
+  padding: 8px 2px;
+}
+
+.open-original-button {
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 0.79rem;
+}
+
+.resource-button,
+.primary-button {
+  min-height: 42px;
+  padding: 0 14px;
+  font-size: 0.84rem;
+}
+
+#refreshLibraryButton {
+  min-height: 42px !important;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+/* Custom audio dock. */
+.audio-dock {
+  grid-template-columns: minmax(140px, 230px) minmax(0, 1fr);
+  min-height: var(--audio-height);
+  gap: 18px;
+  padding:
+    10px
+    18px
+    calc(10px + env(safe-area-inset-bottom));
+}
+
+.practice-player {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.practice-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 4vw, 34px);
+}
+
+.practice-skip-button,
+.practice-play-button {
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.practice-skip-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+
+  width: 62px;
+  height: 52px;
+
+  border-radius: 15px;
+
+  background: var(--surface-2);
+
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.practice-play-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 66px;
+  height: 58px;
+
+  border-color: var(--accent-border);
+  border-radius: 18px;
+
+  background: var(--accent-soft);
+  color: var(--accent);
+
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.practice-skip-button:active,
+.practice-play-button:active {
+  transform: scale(0.96);
+}
+
+.practice-skip-button:focus-visible,
+.practice-play-button:focus-visible {
+  outline: 3px solid rgba(108, 179, 255, 0.22);
+  outline-offset: 2px;
+}
+
+.skip-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.skip-value {
+  line-height: 1;
+}
+
+.practice-progress-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  gap: 9px;
+  align-items: center;
+}
+
+.practice-time {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.practice-seek {
+  width: 100%;
+  height: 30px;
+  margin: 0;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  background: transparent;
+
+  cursor: pointer;
+  touch-action: pan-x;
+}
+
+.practice-seek::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.practice-seek::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+
+  background: var(--text);
+}
+
+.practice-seek::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.practice-seek::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+
+  background: var(--text);
+}
+
+.practice-seek:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* The native audio engine remains present but invisible. */
+#audioPlayer {
+  display: none;
+}
+
+/* Preserve as much room as possible for sheet music. */
+.document-panel {
+  min-height:
+    calc(
+      100dvh
+      - var(--audio-height)
+      - 50px
+      - env(safe-area-inset-top)
+    );
+}
+
+@media (max-width: 650px) {
+  :root {
+    --audio-height: 154px;
+  }
+
+  .audio-dock {
+    grid-template-columns: 1fr;
+    gap: 5px;
+
+    padding:
+      6px
+      10px
+      calc(7px + env(safe-area-inset-bottom));
+  }
+
+  .audio-dock-info {
+    text-align: center;
+  }
+
+  .audio-label {
+    font-size: 0.55rem;
+  }
+
+  #audioTrackTitle {
+    font-size: 0.72rem;
+  }
+
+  .practice-player {
+    gap: 4px;
+  }
+
+  .practice-controls {
+    gap: clamp(20px, 8vw, 38px);
+  }
+
+  .practice-skip-button {
+    width: 64px;
+    height: 52px;
+    border-radius: 15px;
+  }
+
+  .practice-play-button {
+    width: 68px;
+    height: 58px;
+    border-radius: 18px;
+  }
+
+  .practice-progress-row {
+    grid-template-columns: 39px minmax(0, 1fr) 39px;
+    gap: 6px;
+  }
+
+  .practice-seek {
+    height: 26px;
+  }
+
+  .practice-time {
+    font-size: 0.68rem;
+  }
+
+  .text-button {
+    min-height: 40px;
+    font-size: 0.8rem;
+  }
+
+  .open-original-button {
+    min-height: 38px;
+    padding: 0 9px;
+    font-size: 0.69rem;
+  }
+
+  .resource-button,
+  .primary-button {
+    min-height: 40px;
+    padding: 0 11px;
+    font-size: 0.78rem;
+  }
+
+  .alphabet-button {
+    min-width: 39px;
+    height: 39px;
+  }
+
+  .document-panel {
+    min-height:
+      calc(
+        100dvh
+        - var(--audio-height)
+        - 44px
+        - env(safe-area-inset-top)
+      );
+  }
+}
+
+@media (max-width: 390px) {
+  :root {
+    --audio-height: 150px;
+  }
+
+  .practice-controls {
+    gap: 18px;
+  }
+
+  .practice-skip-button {
+    width: 60px;
+    height: 50px;
+  }
+
+  .practice-play-button {
+    width: 64px;
+    height: 56px;
+  }
+
+  .open-original-button {
+    padding: 0 7px;
+    font-size: 0.64rem;
+  }
+}
