@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#17324d" />
+  <meta name="theme-color" content="#0d1117" />
   <meta name="description" content="Search, view, and practice church sheet music." />
 
   <title>Church Music Library</title>
@@ -37,7 +37,21 @@
       <nav id="alphabetNav" class="alphabet-nav" aria-label="Browse alphabetically"></nav>
 
       <div class="library-toolbar">
-        <p id="resultCount"></p>
+        <div>
+          <p id="resultCount"></p>
+          <p id="libraryUpdateText" style="margin-top:4px; font-size:0.76rem;">
+            Library loaded
+          </p>
+        </div>
+
+        <button
+          id="refreshLibraryButton"
+          class="primary-button"
+          type="button"
+          style="min-height:34px;"
+        >
+          Refresh Library
+        </button>
       </div>
 
       <div id="songList" class="song-list"></div>
@@ -57,15 +71,25 @@
           <h2 id="songTitle"></h2>
         </div>
 
-        <a
-          id="openOriginalButton"
-          class="open-original-button hidden"
-          href="#"
-          target="_blank"
-          rel="noopener"
-        >
-          Open Original
-        </a>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button
+            id="sharePrintButton"
+            class="open-original-button hidden"
+            type="button"
+          >
+            Share / Print
+          </button>
+
+          <a
+            id="openOriginalButton"
+            class="open-original-button hidden"
+            href="#"
+            target="_blank"
+            rel="noopener"
+          >
+            Open Original
+          </a>
+        </div>
       </div>
 
       <div id="resourceActions" class="resource-actions"></div>
@@ -107,11 +131,6 @@
     <audio id="audioPlayer" controls preload="metadata"></audio>
   </aside>
 
-  <!--
-    PDF.js renders the sheet music directly into our page.
-    The "Open Original" button still opens the browser's native PDF viewer
-    for printing, downloading, sharing, etc.
-  -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     if (window.pdfjsLib) {

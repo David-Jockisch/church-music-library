@@ -4,6 +4,9 @@ const resultCount = document.getElementById("resultCount");
 const emptyState = document.getElementById("emptyState");
 const alphabetNav = document.getElementById("alphabetNav");
 
+const refreshLibraryButton = document.getElementById("refreshLibraryButton");
+const libraryUpdateText = document.getElementById("libraryUpdateText");
+
 const libraryView = document.getElementById("libraryView");
 const songView = document.getElementById("songView");
 const backButton = document.getElementById("backButton");
@@ -12,6 +15,7 @@ const songTitle = document.getElementById("songTitle");
 const songMeta = document.getElementById("songMeta");
 const resourceActions = document.getElementById("resourceActions");
 const openOriginalButton = document.getElementById("openOriginalButton");
+const sharePrintButton = document.getElementById("sharePrintButton");
 
 const documentEmpty = document.getElementById("documentEmpty");
 const pdfStatus = document.getElementById("pdfStatus");
@@ -27,10 +31,19 @@ const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 let activePdfDocument = null;
 let activePdfResource = null;
+let activeResource = null;
+let activeSong = null;
 let pdfRenderToken = 0;
 let resizeTimer = null;
 
-const sortedLibrary = [...musicLibrary].sort((a, b) =>
+/*
+  Keep a live copy of the library instead of reading directly from the
+  original const. This lets the PWA fetch a newly-published music-library.js
+  and update itself without closing the app.
+*/
+let liveMusicLibrary = [...musicLibrary];
+
+let sortedLibrary = [...liveMusicLibrary].sort((a, b) =>
   a.title.localeCompare(b.title, undefined, { sensitivity: "base" })
 );
 
@@ -46,6 +59,23 @@ function searchableText(song) {
     ...(song.documents || []).map((item) => item.label),
     ...(song.audio || []).map((item) => item.label)
   ].join(" "));
+}
+
+function formatDateTime(value) {
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function setLibraryStatus(text) {
+  libraryUpdateText.textContent = text;
 }
 
 function songResourceBadges(song) {
@@ -99,13 +129,15 @@ function renderLibrary(query = "") {
     !q || searchableText(song).includes(q)
   );
 
-if (q) {
-  resultCount.textContent =
-    `${matches.length} of ${sortedLibrary.length} songs`;
-} else {
-  resultCount.textContent =
-    `${sortedLibrary.length} ${sortedLibrary.length === 1 ? "song" : "songs"} in library`;
-}  emptyState.classList.toggle("hidden", matches.length > 0);
+  if (q) {
+    resultCount.textContent =
+      `${matches.length} of ${sortedLibrary.length} songs`;
+  } else {
+    resultCount.textContent =
+      `${sortedLibrary.length} ${sortedLibrary.length === 1 ? "song" : "songs"} in library`;
+  }
+
+  emptyState.classList.toggle("hidden", matches.length > 0);
 
   const grouped = new Map();
 
@@ -157,11 +189,15 @@ function clearPdfViewer() {
 function resetDocumentViewer() {
   clearPdfViewer();
 
+  activeResource = null;
+
   wordNotice.classList.add("hidden");
   documentEmpty.classList.remove("hidden");
 
   openOriginalButton.classList.add("hidden");
   openOriginalButton.removeAttribute("href");
+
+  sharePrintButton.classList.add("hidden");
 
   resourceActions
     .querySelectorAll(".resource-button")
@@ -197,10 +233,6 @@ async function renderPdfPages(resource) {
     activePdfDocument = pdf;
     pdfViewer.innerHTML = "";
 
-    /*
-      Render at higher internal resolution for sharp text while CSS displays
-      the canvas at the actual available page width.
-    */
     const availableWidth = Math.max(280, pdfViewer.parentElement.clientWidth);
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 
@@ -220,13 +252,8 @@ async function renderPdfPages(resource) {
       canvas.width = Math.floor(renderViewport.width);
       canvas.height = Math.floor(renderViewport.height);
 
-      /*
-        CSS pixels remain the full viewer width while the backing canvas uses
-        the higher device-pixel resolution calculated above.
-      */
       canvas.style.width = `${availableWidth}px`;
-      canvas.style.height =
-        `${(baseViewport.height * displayScale)}px`;
+      canvas.style.height = `${baseViewport.height * displayScale}px`;
 
       pdfViewer.appendChild(canvas);
 
@@ -260,10 +287,17 @@ function openDocument(resource, button) {
   documentEmpty.classList.add("hidden");
   button?.classList.add("active");
 
+  activeResource = resource;
+
   openOriginalButton.href = resource.file;
   openOriginalButton.classList.remove("hidden");
 
+  /*
+    Share / Print is most useful for PDFs because iOS can receive the actual
+    PDF file in its native share sheet. The Print action then appears there.
+  */
   if (resource.type === "pdf") {
+    sharePrintButton.classList.remove("hidden");
     renderPdfPages(resource);
     return;
   }
@@ -301,6 +335,8 @@ function setAudio(song) {
 }
 
 function populateSongView(song) {
+  activeSong = song;
+
   songTitle.textContent = song.title;
 
   songMeta.textContent = [
@@ -345,7 +381,7 @@ function populateSongView(song) {
 }
 
 function openSong(id, updateHistory = true) {
-  const song = musicLibrary.find((item) => item.id === id);
+  const song = liveMusicLibrary.find((item) => item.id === id);
 
   if (!song) return;
 
@@ -368,6 +404,8 @@ function closeSong(updateHistory = true) {
   songView.classList.add("hidden");
   libraryView.classList.remove("hidden");
 
+  activeSong = null;
+
   audioPlayer.pause();
   audioPlayer.removeAttribute("src");
   audioPlayer.load();
@@ -382,6 +420,208 @@ function closeSong(updateHistory = true) {
   }
 }
 
+/* ==========================================================
+   NATIVE SHARE / PRINT
+   ========================================================== */
+
+async function shareCurrentDocument() {
+  if (!activeResource?.file) return;
+
+  const originalText = sharePrintButton.textContent;
+  sharePrintButton.disabled = true;
+  sharePrintButton.textContent = "Preparing…";
+
+  try {
+    /*
+      Cache-busting + no-store ensures the current PDF is fetched rather than
+      an older PWA-cached copy.
+    */
+    const separator = activeResource.file.includes("?") ? "&" : "?";
+    const response = await fetch(
+      `${activeResource.file}${separator}share=${Date.now()}`,
+      { cache: "no-store" }
+    );
+
+    if (!response.ok) {
+      throw new Error(`PDF request failed with ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const filename =
+      activeResource.file.split("/").pop().split("?")[0] ||
+      `${activeSong?.title || "sheet-music"}.pdf`;
+
+    const file = new File(
+      [blob],
+      decodeURIComponent(filename),
+      { type: blob.type || "application/pdf" }
+    );
+
+    const fileShareData = {
+      title: activeSong?.title || "Sheet Music",
+      files: [file]
+    };
+
+    /*
+      iPhone/iPad Safari supports sharing files through the native Share Sheet.
+      Print is available from that system sheet.
+    */
+    if (
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({ files: [file] })
+    ) {
+      await navigator.share(fileShareData);
+      return;
+    }
+
+    /*
+      If file sharing is unavailable but the Web Share API exists, share the
+      original PDF URL. Otherwise fall back to opening the raw PDF.
+    */
+    if (navigator.share) {
+      const absoluteUrl = new URL(activeResource.file, window.location.href).href;
+
+      await navigator.share({
+        title: activeSong?.title || "Sheet Music",
+        url: absoluteUrl
+      });
+
+      return;
+    }
+
+    window.open(activeResource.file, "_blank", "noopener");
+  } catch (error) {
+    /*
+      AbortError means the user simply dismissed the native share sheet.
+      Don't treat that as a failure.
+    */
+    if (error?.name !== "AbortError") {
+      console.error("Share / Print failed:", error);
+      window.open(activeResource.file, "_blank", "noopener");
+    }
+  } finally {
+    sharePrintButton.disabled = false;
+    sharePrintButton.textContent = originalText;
+  }
+}
+
+/* ==========================================================
+   PWA LIBRARY REFRESH
+   ========================================================== */
+
+async function fetchLatestLibrary() {
+  const url = `js/music-library.js?refresh=${Date.now()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      "Cache-Control": "no-cache"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Library request failed with ${response.status}`);
+  }
+
+  const source = await response.text();
+
+  /*
+    music-library.js declares:
+      const musicLibrary = [ ... ];
+
+    Evaluate the fetched file in an isolated function and return that array.
+    This lets us update the running PWA without reloading the whole app.
+  */
+  const getLibrary = new Function(`
+    ${source}
+    return typeof musicLibrary !== "undefined" ? musicLibrary : [];
+  `);
+
+  const latestLibrary = getLibrary();
+
+  if (!Array.isArray(latestLibrary)) {
+    throw new Error("The refreshed music library was not valid.");
+  }
+
+  return {
+    library: latestLibrary,
+    lastModified: response.headers.get("last-modified")
+  };
+}
+
+async function refreshLibrary() {
+  const originalText = refreshLibraryButton.textContent;
+
+  refreshLibraryButton.disabled = true;
+  refreshLibraryButton.textContent = "Refreshing…";
+  setLibraryStatus("Checking GitHub Pages for updates…");
+
+  try {
+    /*
+      Ask the service worker to check for a newer version too. The library
+      fetch below does not depend on this finishing successfully.
+    */
+    if ("serviceWorker" in navigator) {
+      const registration = await navigator.serviceWorker.getRegistration();
+
+      if (registration) {
+        registration.update().catch(() => {});
+      }
+    }
+
+    const result = await fetchLatestLibrary();
+
+    liveMusicLibrary = result.library;
+
+    sortedLibrary = [...liveMusicLibrary].sort((a, b) =>
+      a.title.localeCompare(b.title, undefined, { sensitivity: "base" })
+    );
+
+    renderLibrary(searchInput.value);
+
+    const serverDate = result.lastModified
+      ? formatDateTime(result.lastModified)
+      : "";
+
+    if (serverDate) {
+      setLibraryStatus(`Library updated: ${serverDate}`);
+    } else {
+      setLibraryStatus(`Library checked: ${formatDateTime(new Date())}`);
+    }
+
+    localStorage.setItem(
+      "churchMusicLibraryLastRefresh",
+      new Date().toISOString()
+    );
+
+    /*
+      If a song is currently open and still exists after the refresh,
+      quietly update its in-memory data without interrupting playback.
+    */
+    if (activeSong) {
+      const refreshedSong = liveMusicLibrary.find(
+        (song) => song.id === activeSong.id
+      );
+
+      if (refreshedSong) {
+        activeSong = refreshedSong;
+      }
+    }
+  } catch (error) {
+    console.error("Library refresh failed:", error);
+    setLibraryStatus("Refresh failed — using saved library");
+  } finally {
+    refreshLibraryButton.disabled = false;
+    refreshLibraryButton.textContent = originalText;
+  }
+}
+
+/* ==========================================================
+   EVENTS
+   ========================================================== */
+
 searchInput.addEventListener("input", (event) => {
   renderLibrary(event.target.value);
 });
@@ -390,20 +630,19 @@ backButton.addEventListener("click", () => {
   closeSong();
 });
 
+sharePrintButton.addEventListener("click", shareCurrentDocument);
+refreshLibraryButton.addEventListener("click", refreshLibrary);
+
 window.addEventListener("popstate", () => {
   const id = window.location.hash.slice(1);
 
-  if (id && musicLibrary.some((song) => song.id === id)) {
+  if (id && liveMusicLibrary.some((song) => song.id === id)) {
     openSong(id, false);
   } else {
     closeSong(false);
   }
 });
 
-/*
-  Re-render the active PDF when orientation / window width changes so the
-  pages continue fitting the device exactly.
-*/
 window.addEventListener("resize", () => {
   if (!activePdfResource) return;
 
@@ -415,11 +654,32 @@ window.addEventListener("resize", () => {
   }, 250);
 });
 
+/* ==========================================================
+   INITIAL LOAD
+   ========================================================== */
+
 renderLibrary();
+
+const previousRefresh = localStorage.getItem(
+  "churchMusicLibraryLastRefresh"
+);
+
+if (previousRefresh) {
+  setLibraryStatus(
+    `Last checked: ${formatDateTime(previousRefresh)}`
+  );
+} else {
+  setLibraryStatus(
+    `Library loaded: ${formatDateTime(new Date())}`
+  );
+}
 
 const initialId = window.location.hash.slice(1);
 
-if (initialId && musicLibrary.some((song) => song.id === initialId)) {
+if (
+  initialId &&
+  liveMusicLibrary.some((song) => song.id === initialId)
+) {
   openSong(initialId, false);
 }
 
