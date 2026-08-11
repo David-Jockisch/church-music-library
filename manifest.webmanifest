@@ -1,9 +1,24 @@
 {
   "name": "Church Music Library",
   "short_name": "Music Library",
+  "description": "Church sheet music and practice track library",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f5f7f9",
-  "theme_color": "#17324d",
-  "description": "Search, view, and practice church sheet music."
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
