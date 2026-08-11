@@ -28,6 +28,7 @@ const audioDock = document.getElementById("audioDock");
 const audioTrackTitle = document.getElementById("audioTrackTitle");
 const audioPlayer = document.getElementById("audioPlayer");
 
+const fitMusicButton = document.getElementById("fitMusicButton");
 const rewindButton = document.getElementById("rewindButton");
 const playPauseButton = document.getElementById("playPauseButton");
 const playPauseIcon = document.getElementById("playPauseIcon");
@@ -44,6 +45,14 @@ let activeResource = null;
 let activeSong = null;
 let pdfRenderToken = 0;
 let resizeTimer = null;
+
+/* Practice-sheet zoom state */
+let practiceZoom = 1;
+const PRACTICE_ZOOM_MIN = 1;
+const PRACTICE_ZOOM_MAX = 3;
+
+let pinchStartDistance = 0;
+let pinchStartZoom = 1;
 
 /*
   Keep a live copy of the library instead of reading directly from the
@@ -259,8 +268,14 @@ async function renderPdfPages(resource) {
       canvas.width = Math.floor(renderViewport.width);
       canvas.height = Math.floor(renderViewport.height);
 
-      canvas.style.width = `${availableWidth}px`;
-      canvas.style.height = `${baseViewport.height * displayScale}px`;
+      const baseCssWidth = availableWidth;
+      const baseCssHeight = baseViewport.height * displayScale;
+
+      canvas.dataset.baseWidth = String(baseCssWidth);
+      canvas.dataset.baseHeight = String(baseCssHeight);
+
+      canvas.style.width = `${baseCssWidth * practiceZoom}px`;
+      canvas.style.height = `${baseCssHeight * practiceZoom}px`;
 
       pdfViewer.appendChild(canvas);
 
@@ -430,8 +445,154 @@ function setAudio(song) {
 }
 
 
+
+function clampPracticeZoom(value) {
+  return Math.min(
+    PRACTICE_ZOOM_MAX,
+    Math.max(PRACTICE_ZOOM_MIN, value)
+  );
+}
+
+function applyPracticeZoom(nextZoom, focusX = null, focusY = null) {
+  const panel = documentPanel;
+  const oldZoom = practiceZoom;
+  const zoom = clampPracticeZoom(nextZoom);
+
+  if (!panel || Math.abs(zoom - oldZoom) < 0.001) return;
+
+  /*
+    Preserve the point beneath the user's fingers while changing zoom.
+  */
+  const panelRect = panel.getBoundingClientRect();
+
+  const localX =
+    focusX == null
+      ? panel.clientWidth / 2
+      : focusX - panelRect.left;
+
+  const localY =
+    focusY == null
+      ? panel.clientHeight / 2
+      : focusY - panelRect.top;
+
+  const contentX = (panel.scrollLeft + localX) / oldZoom;
+  const contentY = (panel.scrollTop + localY) / oldZoom;
+
+  practiceZoom = zoom;
+
+  pdfViewer.querySelectorAll(".pdf-page").forEach((canvas) => {
+    const baseWidth = Number(canvas.dataset.baseWidth);
+    const baseHeight = Number(canvas.dataset.baseHeight);
+
+    if (!Number.isFinite(baseWidth) || !Number.isFinite(baseHeight)) return;
+
+    canvas.style.width = `${baseWidth * practiceZoom}px`;
+    canvas.style.height = `${baseHeight * practiceZoom}px`;
+  });
+
+  pdfViewer.style.width = `${100 * practiceZoom}%`;
+
+  requestAnimationFrame(() => {
+    panel.scrollLeft = contentX * practiceZoom - localX;
+    panel.scrollTop = contentY * practiceZoom - localY;
+  });
+
+  fitMusicButton.classList.toggle(
+    "zoom-active",
+    practiceZoom > 1.01
+  );
+}
+
+function resetPracticeZoom() {
+  practiceZoom = 1;
+
+  pdfViewer.style.width = "100%";
+
+  pdfViewer.querySelectorAll(".pdf-page").forEach((canvas) => {
+    const baseWidth = Number(canvas.dataset.baseWidth);
+    const baseHeight = Number(canvas.dataset.baseHeight);
+
+    if (!Number.isFinite(baseWidth) || !Number.isFinite(baseHeight)) return;
+
+    canvas.style.width = `${baseWidth}px`;
+    canvas.style.height = `${baseHeight}px`;
+  });
+
+  documentPanel.scrollLeft = 0;
+  documentPanel.scrollTop = 0;
+
+  fitMusicButton.classList.remove("zoom-active");
+}
+
+function touchDistance(touchA, touchB) {
+  return Math.hypot(
+    touchB.clientX - touchA.clientX,
+    touchB.clientY - touchA.clientY
+  );
+}
+
+function touchMidpoint(touchA, touchB) {
+  return {
+    x: (touchA.clientX + touchB.clientX) / 2,
+    y: (touchA.clientY + touchB.clientY) / 2
+  };
+}
+
+function handlePracticeTouchStart(event) {
+  if (!document.body.classList.contains("practice-mode")) return;
+  if (!activePdfResource) return;
+
+  if (event.touches.length === 2) {
+    pinchStartDistance = touchDistance(
+      event.touches[0],
+      event.touches[1]
+    );
+
+    pinchStartZoom = practiceZoom;
+
+    /*
+      Stop iOS from zooming the entire PWA.
+    */
+    event.preventDefault();
+  }
+}
+
+function handlePracticeTouchMove(event) {
+  if (!document.body.classList.contains("practice-mode")) return;
+  if (!activePdfResource) return;
+  if (event.touches.length !== 2 || pinchStartDistance <= 0) return;
+
+  event.preventDefault();
+
+  const distance = touchDistance(
+    event.touches[0],
+    event.touches[1]
+  );
+
+  const scale = distance / pinchStartDistance;
+  const midpoint = touchMidpoint(
+    event.touches[0],
+    event.touches[1]
+  );
+
+  applyPracticeZoom(
+    pinchStartZoom * scale,
+    midpoint.x,
+    midpoint.y
+  );
+}
+
+function handlePracticeTouchEnd(event) {
+  if (event.touches.length < 2) {
+    pinchStartDistance = 0;
+    pinchStartZoom = practiceZoom;
+  }
+}
+
 function enterPracticeMode() {
   if (!activeSong || !(activeSong.audio || []).length) return;
+
+  resetPracticeZoom();
 
   document.body.classList.add("practice-mode");
   songView.classList.add("practice-mode-active");
@@ -468,6 +629,7 @@ function enterPracticeMode() {
 
 function exitPracticeMode() {
   audioPlayer.pause();
+  resetPracticeZoom();
 
   document.body.classList.remove(
     "practice-mode",
@@ -855,6 +1017,8 @@ window.addEventListener("resize", () => {
    PRACTICE AUDIO CONTROLS
    ========================================================== */
 
+fitMusicButton.addEventListener("click", resetPracticeZoom);
+
 playPauseButton.addEventListener("click", toggleAudioPlayback);
 
 rewindButton.addEventListener("click", () => {
@@ -884,6 +1048,35 @@ audioPlayer.addEventListener("ended", () => {
   updatePlayPauseButton();
   updateAudioProgress();
 });
+
+
+/*
+  Pinch zoom is bound only to the document panel.
+  The fixed player never participates in the gesture.
+*/
+documentPanel.addEventListener(
+  "touchstart",
+  handlePracticeTouchStart,
+  { passive: false }
+);
+
+documentPanel.addEventListener(
+  "touchmove",
+  handlePracticeTouchMove,
+  { passive: false }
+);
+
+documentPanel.addEventListener(
+  "touchend",
+  handlePracticeTouchEnd,
+  { passive: true }
+);
+
+documentPanel.addEventListener(
+  "touchcancel",
+  handlePracticeTouchEnd,
+  { passive: true }
+);
 
 /* ==========================================================
    INITIAL LOAD

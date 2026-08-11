@@ -1781,3 +1781,268 @@ body.practice-mode .audio-dock {
       );
   }
 }
+
+
+/* ==========================================================
+   PRACTICE V5 — PDF-ONLY PINCH ZOOM
+   ========================================================== */
+
+/*
+  Practice document area is its own scroll viewport.
+  The fixed player exists outside it, so zoom/pan never moves the controls.
+*/
+body.practice-mode {
+  overflow: hidden;
+}
+
+body.practice-mode .song-view {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body.practice-mode .document-panel {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom:
+    calc(
+      var(--audio-height)
+      + env(safe-area-inset-bottom)
+    );
+
+  width: 100%;
+  min-height: 0 !important;
+  height: auto;
+
+  overflow: auto;
+  overscroll-behavior: contain;
+
+  /*
+    Allow normal one-finger scrolling/panning, while JS intercepts
+    two-finger pinch gestures before Safari zooms the whole PWA.
+  */
+  touch-action: pan-x pan-y;
+
+  -webkit-overflow-scrolling: touch;
+
+  background: #11151a;
+}
+
+body.practice-mode .pdf-viewer {
+  width: 100%;
+  min-width: 100%;
+
+  margin: 0;
+
+  transform-origin: top left;
+}
+
+body.practice-mode .pdf-page {
+  max-width: none !important;
+  flex: none;
+
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Fit control lives inside the player, so it never covers the music. */
+.practice-fit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 52px;
+  height: 46px;
+
+  padding: 0 11px;
+
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+
+  background: var(--surface-2);
+  color: var(--text-2);
+
+  font-size: 0.76rem;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.practice-fit-button.zoom-active {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.practice-fit-button:active {
+  transform: scale(0.96);
+}
+
+/*
+  Four practice buttons now share the row without making the player taller.
+*/
+.practice-controls {
+  gap: clamp(10px, 3vw, 26px);
+}
+
+@media (max-width: 650px) {
+  .practice-controls {
+    gap: clamp(10px, 4vw, 22px);
+  }
+
+  .practice-fit-button {
+    min-width: 50px;
+    height: 48px;
+  }
+
+  body.practice-mode .document-panel {
+    bottom:
+      calc(
+        var(--audio-height)
+        + env(safe-area-inset-bottom)
+      );
+  }
+}
+
+@media (max-width: 390px) {
+  .practice-controls {
+    gap: 9px;
+  }
+
+  .practice-fit-button {
+    min-width: 46px;
+    height: 46px;
+    padding: 0 8px;
+    font-size: 0.7rem;
+  }
+}
+
+
+/* ==========================================================
+   V5.1 LAYOUT POLISH
+   View/Print header cleanup + iPhone safe-area protection
+   ========================================================== */
+
+/* ----------------------------------------------------------
+   VIEW / PRINT PAGE
+   Hide the large site header whenever a song is open.
+   ---------------------------------------------------------- */
+
+body:has(#songView:not(.hidden)) .site-header {
+  display: none !important;
+}
+
+body:has(#songView:not(.hidden)) main {
+  padding-top: 0 !important;
+}
+
+/*
+  Keep the compact song action row near the very top,
+  but respect the device safe area.
+*/
+body:not(.practice-mode) .song-view-header {
+  margin-top: 0 !important;
+
+  padding-top:
+    calc(
+      10px
+      + env(safe-area-inset-top)
+    ) !important;
+
+  padding-bottom: 10px !important;
+}
+
+/*
+  Small breathing room before the buttons without bringing back
+  the large dead-space header.
+*/
+body:not(.practice-mode) .song-view {
+  padding-top: 0 !important;
+}
+
+/*
+  Maximize document height on the View / Print screen.
+*/
+body:not(.practice-mode) .document-panel {
+  min-height:
+    calc(
+      100dvh
+      - 58px
+      - env(safe-area-inset-top)
+    ) !important;
+}
+
+
+/* ----------------------------------------------------------
+   PRACTICE PAGE
+   Keep sheet music below the iPhone notch / Dynamic Island.
+   ---------------------------------------------------------- */
+
+body.practice-mode .document-panel {
+  top: env(safe-area-inset-top) !important;
+
+  bottom:
+    calc(
+      var(--audio-height)
+      + env(safe-area-inset-bottom)
+    ) !important;
+}
+
+/*
+  Give the PDF itself a small extra top cushion in addition to
+  the safe-area inset so the title/first staff never feels cramped.
+*/
+body.practice-mode .pdf-viewer {
+  padding-top: 6px;
+}
+
+/*
+  Since the viewer gets top padding, keep the first PDF page
+  flush within that safe viewing area.
+*/
+body.practice-mode .pdf-page:first-child {
+  margin-top: 0 !important;
+}
+
+
+/* ----------------------------------------------------------
+   MOBILE
+   ---------------------------------------------------------- */
+
+@media (max-width: 650px) {
+  body:not(.practice-mode) .song-view-header {
+    padding-top:
+      calc(
+        8px
+        + env(safe-area-inset-top)
+      ) !important;
+
+    padding-bottom: 8px !important;
+  }
+
+  body:not(.practice-mode) .document-panel {
+    min-height:
+      calc(
+        100dvh
+        - 54px
+        - env(safe-area-inset-top)
+      ) !important;
+  }
+
+  body.practice-mode .document-panel {
+    top:
+      calc(
+        env(safe-area-inset-top)
+        + 2px
+      ) !important;
+  }
+
+  body.practice-mode .pdf-viewer {
+    padding-top: 4px;
+  }
+}
