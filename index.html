@@ -71,7 +71,7 @@
           <h2 id="songTitle"></h2>
         </div>
 
-        <div style="display:flex; gap:6px; align-items:center;">
+        <div class="song-header-actions">
           <button
             id="sharePrintButton"
             class="open-original-button hidden"
@@ -80,19 +80,23 @@
             Share / Print
           </button>
 
-          <a
-            id="openOriginalButton"
-            class="open-original-button hidden"
-            href="#"
-            target="_blank"
-            rel="noopener"
+          <button
+            id="practiceButton"
+            class="open-original-button practice-launch-button hidden"
+            type="button"
           >
-            Open Original
-          </a>
+            Practice
+          </button>
         </div>
       </div>
 
       <div id="resourceActions" class="resource-actions"></div>
+
+      <div id="practiceHeader" class="practice-header hidden">
+        <button id="exitPracticeButton" class="quit-practice-button" type="button">
+          Quit Practice
+        </button>
+      </div>
 
       <section id="documentPanel" class="document-panel">
         <div id="documentEmpty" class="document-empty">

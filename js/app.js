@@ -14,8 +14,10 @@ const backButton = document.getElementById("backButton");
 const songTitle = document.getElementById("songTitle");
 const songMeta = document.getElementById("songMeta");
 const resourceActions = document.getElementById("resourceActions");
-const openOriginalButton = document.getElementById("openOriginalButton");
 const sharePrintButton = document.getElementById("sharePrintButton");
+const practiceButton = document.getElementById("practiceButton");
+const practiceHeader = document.getElementById("practiceHeader");
+const exitPracticeButton = document.getElementById("exitPracticeButton");
 
 const documentEmpty = document.getElementById("documentEmpty");
 const pdfStatus = document.getElementById("pdfStatus");
@@ -202,10 +204,8 @@ function resetDocumentViewer() {
   wordNotice.classList.add("hidden");
   documentEmpty.classList.remove("hidden");
 
-  openOriginalButton.classList.add("hidden");
-  openOriginalButton.removeAttribute("href");
-
   sharePrintButton.classList.add("hidden");
+  practiceButton.classList.add("hidden");
 
   resourceActions
     .querySelectorAll(".resource-button")
@@ -297,15 +297,18 @@ function openDocument(resource, button) {
 
   activeResource = resource;
 
-  openOriginalButton.href = resource.file;
-  openOriginalButton.classList.remove("hidden");
-
   /*
-    Share / Print is most useful for PDFs because iOS can receive the actual
-    PDF file in its native share sheet. The Print action then appears there.
+    The normal song landing page is now the document viewing / printing area.
+    Practice mode uses the same rendered PDF, but strips away the normal
+    library controls and exposes the large rehearsal player.
   */
   if (resource.type === "pdf") {
     sharePrintButton.classList.remove("hidden");
+
+    if ((activeSong?.audio || []).length) {
+      practiceButton.classList.remove("hidden");
+    }
+
     renderPdfPages(resource);
     return;
   }
@@ -416,8 +419,47 @@ function setAudio(song) {
 
   resetPracticePlayerUi();
 
-  audioDock.classList.remove("hidden");
+  /*
+    Load the track now, but keep the player hidden on the normal
+    View / Print landing page. enterPracticeMode() reveals it.
+  */
+  audioDock.classList.add("hidden");
+  songView.classList.remove("has-audio");
+}
+
+
+function enterPracticeMode() {
+  if (!activeSong || !activeResource || activeResource.type !== "pdf") return;
+  if (!(activeSong.audio || []).length) return;
+
+  document.body.classList.add("practice-mode");
+  songView.classList.add("practice-mode-active");
   songView.classList.add("has-audio");
+
+  practiceHeader.classList.remove("hidden");
+
+  audioDock.classList.remove("hidden");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "instant"
+  });
+}
+
+function exitPracticeMode() {
+  audioPlayer.pause();
+
+  document.body.classList.remove("practice-mode");
+  songView.classList.remove("practice-mode-active");
+  songView.classList.remove("has-audio");
+
+  practiceHeader.classList.add("hidden");
+  audioDock.classList.add("hidden");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "instant"
+  });
 }
 
 function populateSongView(song) {
@@ -487,6 +529,8 @@ function openSong(id, updateHistory = true) {
 }
 
 function closeSong(updateHistory = true) {
+  exitPracticeMode();
+
   songView.classList.add("hidden");
   libraryView.classList.remove("hidden");
 
@@ -515,14 +559,38 @@ async function shareCurrentDocument() {
 
   const originalText = sharePrintButton.textContent;
   sharePrintButton.disabled = true;
+
+  /*
+    Desktop browsers already have excellent native print dialogs.
+    Printing the current rendered PDF view is more reliable than trying
+    to route desktop users through the Web Share API.
+  */
+  const isIOS =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  if (!isIOS) {
+    sharePrintButton.textContent = "Opening Print…";
+
+    try {
+      window.print();
+    } finally {
+      sharePrintButton.disabled = false;
+      sharePrintButton.textContent = originalText;
+    }
+
+    return;
+  }
+
+  /*
+    iPhone/iPad — fetch the actual PDF and hand it to the native iOS
+    Share Sheet. The system Print action is available there.
+  */
   sharePrintButton.textContent = "Preparing…";
 
   try {
-    /*
-      Cache-busting + no-store ensures the current PDF is fetched rather than
-      an older PWA-cached copy.
-    */
     const separator = activeResource.file.includes("?") ? "&" : "?";
+
     const response = await fetch(
       `${activeResource.file}${separator}share=${Date.now()}`,
       { cache: "no-store" }
@@ -533,6 +601,7 @@ async function shareCurrentDocument() {
     }
 
     const blob = await response.blob();
+
     const filename =
       activeResource.file.split("/").pop().split("?")[0] ||
       `${activeSong?.title || "sheet-music"}.pdf`;
@@ -543,30 +612,25 @@ async function shareCurrentDocument() {
       { type: blob.type || "application/pdf" }
     );
 
-    const fileShareData = {
-      title: activeSong?.title || "Sheet Music",
-      files: [file]
-    };
-
-    /*
-      iPhone/iPad Safari supports sharing files through the native Share Sheet.
-      Print is available from that system sheet.
-    */
     if (
       navigator.share &&
       navigator.canShare &&
       navigator.canShare({ files: [file] })
     ) {
-      await navigator.share(fileShareData);
+      await navigator.share({
+        title: activeSong?.title || "Sheet Music",
+        files: [file]
+      });
+
       return;
     }
 
     /*
-      If file sharing is unavailable but the Web Share API exists, share the
-      original PDF URL. Otherwise fall back to opening the raw PDF.
+      Older iOS fallback: share the original PDF URL.
     */
     if (navigator.share) {
-      const absoluteUrl = new URL(activeResource.file, window.location.href).href;
+      const absoluteUrl =
+        new URL(activeResource.file, window.location.href).href;
 
       await navigator.share({
         title: activeSong?.title || "Sheet Music",
@@ -578,10 +642,6 @@ async function shareCurrentDocument() {
 
     window.open(activeResource.file, "_blank", "noopener");
   } catch (error) {
-    /*
-      AbortError means the user simply dismissed the native share sheet.
-      Don't treat that as a failure.
-    */
     if (error?.name !== "AbortError") {
       console.error("Share / Print failed:", error);
       window.open(activeResource.file, "_blank", "noopener");
@@ -591,6 +651,7 @@ async function shareCurrentDocument() {
     sharePrintButton.textContent = originalText;
   }
 }
+
 
 /* ==========================================================
    PWA LIBRARY REFRESH
@@ -717,6 +778,8 @@ backButton.addEventListener("click", () => {
 });
 
 sharePrintButton.addEventListener("click", shareCurrentDocument);
+practiceButton.addEventListener("click", enterPracticeMode);
+exitPracticeButton.addEventListener("click", exitPracticeMode);
 refreshLibraryButton.addEventListener("click", refreshLibrary);
 
 window.addEventListener("popstate", () => {
