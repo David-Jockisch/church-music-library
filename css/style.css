@@ -2399,3 +2399,7 @@ body:not(.practice-mode) .pdf-viewer {
     --view-controls-height: 100px;
   }
 }
+
+body:not(.practice-mode) .document-panel {
+  padding-top: calc(env(safe-area-inset-top) + 4px) !important;
+}
