@@ -1632,3 +1632,152 @@ body:not(.practice-mode) .document-panel {
     font-size: 0.72rem;
   }
 }
+
+
+/* ==========================================================
+   PRACTICE MODE V4
+   Audio-only songs + Quit button inside player
+   ========================================================== */
+
+/*
+  The old floating practice header is no longer used.
+*/
+.practice-header {
+  display: none !important;
+}
+
+/*
+  Player's top row: song info on the left, Quit Practice on the right.
+*/
+.audio-dock-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.audio-dock-info-row .audio-dock-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.audio-dock .quit-practice-button {
+  flex: 0 0 auto;
+
+  min-height: 38px;
+  padding: 0 12px;
+
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+
+  background: var(--surface-2);
+  color: var(--text-2);
+
+  box-shadow: none;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.audio-dock .quit-practice-button:hover,
+.audio-dock .quit-practice-button:focus-visible {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.audio-dock .quit-practice-button:active {
+  transform: scale(0.97);
+}
+
+/*
+  Practice no longer reserves any top space for a header.
+  The PDF starts at the very top of the display.
+*/
+body.practice-mode .document-panel {
+  min-height:
+    calc(
+      100dvh
+      - var(--audio-height)
+      - env(safe-area-inset-bottom)
+    );
+}
+
+/*
+  Audio-only practice mode:
+  deliberately clean empty stage above the fixed player.
+*/
+body.practice-mode.practice-audio-only .document-panel {
+  min-height:
+    calc(
+      100dvh
+      - var(--audio-height)
+      - env(safe-area-inset-bottom)
+    );
+
+  background: #0d1117;
+}
+
+body.practice-mode.practice-audio-only .document-empty,
+body.practice-mode.practice-audio-only .pdf-status,
+body.practice-mode.practice-audio-only .pdf-viewer,
+body.practice-mode.practice-audio-only .word-notice {
+  display: none !important;
+}
+
+/*
+  The audio dock now has an info/quit row plus player controls.
+*/
+body.practice-mode .audio-dock {
+  grid-template-columns: 1fr !important;
+  gap: 6px;
+}
+
+@media (min-width: 651px) {
+  body.practice-mode .audio-dock {
+    padding:
+      10px
+      18px
+      calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .audio-dock-info-row {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .practice-player {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 650px) {
+  .audio-dock-info-row {
+    gap: 8px;
+  }
+
+  .audio-dock-info-row .audio-dock-info {
+    text-align: left;
+  }
+
+  .audio-dock .quit-practice-button {
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 0.68rem;
+  }
+
+  body.practice-mode .document-panel,
+  body.practice-mode.practice-audio-only .document-panel {
+    min-height:
+      calc(
+        100dvh
+        - var(--audio-height)
+        - env(safe-area-inset-bottom)
+      );
+  }
+}

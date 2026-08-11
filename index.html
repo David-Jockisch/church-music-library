@@ -9,6 +9,12 @@
   <title>Church Music Library</title>
 
   <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Music Library" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 
@@ -92,12 +98,6 @@
 
       <div id="resourceActions" class="resource-actions"></div>
 
-      <div id="practiceHeader" class="practice-header hidden">
-        <button id="exitPracticeButton" class="quit-practice-button" type="button">
-          Quit Practice
-        </button>
-      </div>
-
       <section id="documentPanel" class="document-panel">
         <div id="documentEmpty" class="document-empty">
           <h3>No document selected</h3>
@@ -127,9 +127,19 @@
   </main>
 
   <aside id="audioDock" class="audio-dock hidden" aria-label="Practice audio player">
-    <div class="audio-dock-info">
-      <span class="audio-label">Practice Audio</span>
-      <strong id="audioTrackTitle"></strong>
+    <div class="audio-dock-info-row">
+      <div class="audio-dock-info">
+        <span class="audio-label">Practice Audio</span>
+        <strong id="audioTrackTitle"></strong>
+      </div>
+
+      <button
+        id="exitPracticeButton"
+        class="quit-practice-button"
+        type="button"
+      >
+        Quit Practice
+      </button>
     </div>
 
     <div class="practice-player">

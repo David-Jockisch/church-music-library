@@ -16,7 +16,6 @@ const songMeta = document.getElementById("songMeta");
 const resourceActions = document.getElementById("resourceActions");
 const sharePrintButton = document.getElementById("sharePrintButton");
 const practiceButton = document.getElementById("practiceButton");
-const practiceHeader = document.getElementById("practiceHeader");
 const exitPracticeButton = document.getElementById("exitPracticeButton");
 
 const documentEmpty = document.getElementById("documentEmpty");
@@ -298,17 +297,20 @@ function openDocument(resource, button) {
   activeResource = resource;
 
   /*
+    Practice availability depends ONLY on whether this song has audio.
+    resetDocumentViewer() hides action buttons, so restore Practice here
+    after every document selection.
+  */
+  const hasAudio = (activeSong?.audio || []).length > 0;
+  practiceButton.classList.toggle("hidden", !hasAudio);
+
+  /*
     The normal song landing page is now the document viewing / printing area.
     Practice mode uses the same rendered PDF, but strips away the normal
     library controls and exposes the large rehearsal player.
   */
   if (resource.type === "pdf") {
     sharePrintButton.classList.remove("hidden");
-
-    if ((activeSong?.audio || []).length) {
-      practiceButton.classList.remove("hidden");
-    }
-
     renderPdfPages(resource);
     return;
   }
@@ -429,14 +431,32 @@ function setAudio(song) {
 
 
 function enterPracticeMode() {
-  if (!activeSong || !activeResource || activeResource.type !== "pdf") return;
-  if (!(activeSong.audio || []).length) return;
+  if (!activeSong || !(activeSong.audio || []).length) return;
 
   document.body.classList.add("practice-mode");
   songView.classList.add("practice-mode-active");
   songView.classList.add("has-audio");
 
-  practiceHeader.classList.remove("hidden");
+  /*
+    Audio-only songs are valid. If there is no PDF, hide the normal
+    "No document selected" message so Practice remains a clean screen.
+  */
+  const hasPdf =
+    (activeSong.documents || []).some(
+      (resource) => resource.type === "pdf"
+    );
+
+  document.body.classList.toggle(
+    "practice-audio-only",
+    !hasPdf
+  );
+
+  if (!hasPdf) {
+    documentEmpty.classList.add("hidden");
+    pdfStatus.classList.add("hidden");
+    pdfViewer.classList.add("hidden");
+    wordNotice.classList.add("hidden");
+  }
 
   audioDock.classList.remove("hidden");
 
@@ -449,12 +469,28 @@ function enterPracticeMode() {
 function exitPracticeMode() {
   audioPlayer.pause();
 
-  document.body.classList.remove("practice-mode");
-  songView.classList.remove("practice-mode-active");
-  songView.classList.remove("has-audio");
+  document.body.classList.remove(
+    "practice-mode",
+    "practice-audio-only"
+  );
 
-  practiceHeader.classList.add("hidden");
+  songView.classList.remove(
+    "practice-mode-active",
+    "has-audio"
+  );
+
   audioDock.classList.add("hidden");
+
+  /*
+    Restore the correct normal landing state when leaving audio-only
+    practice mode.
+  */
+  if (
+    activeSong &&
+    !(activeSong.documents || []).length
+  ) {
+    documentEmpty.classList.remove("hidden");
+  }
 
   window.scrollTo({
     top: 0,
@@ -477,6 +513,13 @@ function populateSongView(song) {
   resourceActions.innerHTML = "";
 
   const documents = song.documents || [];
+  const hasAudio = (song.audio || []).length > 0;
+
+  /*
+    Practice is an AUDIO feature. It remains available even when a song
+    has no PDF or other document.
+  */
+  practiceButton.classList.toggle("hidden", !hasAudio);
 
   resourceActions.classList.toggle(
     "single-resource",
@@ -503,6 +546,10 @@ function populateSongView(song) {
 
   if (!documents.length) {
     resetDocumentViewer();
+
+    if (hasAudio) {
+      practiceButton.classList.remove("hidden");
+    }
   }
 
   setAudio(song);
