@@ -531,6 +531,11 @@ const musicLibrary = [
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/How%20Great%20is%20Our%20God.mp3",
         "type": "practice"
+      },
+      {
+        "type": "live",
+        "label": "Live Service",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/live/How%20Great%20is%20our%20God%20Live.mp3"
       }
     ]
   },
@@ -597,6 +602,11 @@ const musicLibrary = [
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Revelation%20Song.mp3",
         "type": "practice"
+      },
+      {
+        "type": "live",
+        "label": "Live Service",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/live/Revelation%20Song%20(live).mp3"
       }
     ]
   },
@@ -619,6 +629,11 @@ const musicLibrary = [
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Speak%2C%20O%20Lord.mp3",
         "type": "practice"
+      },
+      {
+        "type": "live",
+        "label": "Live Service",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/live/Speak%20O%20Lord%20(live).mp3"
       }
     ]
   },

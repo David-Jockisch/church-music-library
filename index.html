@@ -30,6 +30,21 @@
 
   <main>
     <section id="libraryView" class="view">
+      <section class="playset-panel" aria-labelledby="playsetTitle">
+        <div class="playset-heading-row">
+          <div>
+            <p class="eyebrow">This Week</p>
+            <h2 id="playsetTitle">Weekly Playset</h2>
+          </div>
+          <button id="clearPlaysetButton" class="text-button playset-clear-button" type="button">
+            Reset
+          </button>
+        </div>
+
+        <div id="playsetSlots" class="playset-slots"></div>
+        <p id="playsetHint" class="playset-hint">Add up to 3 songs from the library.</p>
+      </section>
+
       <div class="search-wrap">
         <label class="sr-only" for="searchInput">Search music library</label>
         <input
@@ -79,6 +94,14 @@
 
         <div class="song-header-actions">
           <button
+            id="playsetToggleButton"
+            class="open-original-button"
+            type="button"
+          >
+            Add to Set
+          </button>
+
+          <button
             id="sharePrintButton"
             class="open-original-button hidden"
             type="button"
@@ -125,6 +148,20 @@
       </section>
     </section>
   </main>
+
+  <div id="trackPicker" class="track-picker hidden" role="dialog" aria-modal="true" aria-labelledby="trackPickerTitle">
+    <div class="track-picker-card">
+      <div class="track-picker-heading">
+        <div>
+          <p class="eyebrow">Practice</p>
+          <h2 id="trackPickerTitle">Choose a Track</h2>
+          <p id="trackPickerSong" class="track-picker-song"></p>
+        </div>
+        <button id="closeTrackPickerButton" class="track-picker-close" type="button" aria-label="Close track picker">×</button>
+      </div>
+      <div id="trackPickerOptions" class="track-picker-options"></div>
+    </div>
+  </div>
 
   <aside id="audioDock" class="audio-dock hidden" aria-label="Practice audio player">
     <div class="audio-dock-info-row">

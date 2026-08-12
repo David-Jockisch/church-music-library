@@ -16,7 +16,17 @@ const songMeta = document.getElementById("songMeta");
 const resourceActions = document.getElementById("resourceActions");
 const sharePrintButton = document.getElementById("sharePrintButton");
 const practiceButton = document.getElementById("practiceButton");
+const playsetToggleButton = document.getElementById("playsetToggleButton");
 const exitPracticeButton = document.getElementById("exitPracticeButton");
+
+const playsetSlots = document.getElementById("playsetSlots");
+const playsetHint = document.getElementById("playsetHint");
+const clearPlaysetButton = document.getElementById("clearPlaysetButton");
+
+const trackPicker = document.getElementById("trackPicker");
+const trackPickerSong = document.getElementById("trackPickerSong");
+const trackPickerOptions = document.getElementById("trackPickerOptions");
+const closeTrackPickerButton = document.getElementById("closeTrackPickerButton");
 
 const documentEmpty = document.getElementById("documentEmpty");
 const pdfStatus = document.getElementById("pdfStatus");
@@ -43,7 +53,12 @@ let activePdfDocument = null;
 let activePdfResource = null;
 let activeResource = null;
 let activeSong = null;
+let activePracticeTrack = null;
 let pdfRenderToken = 0;
+
+const PLAYSET_STORAGE_KEY = "churchMusicWeeklyPlayset";
+const PLAYSET_MAX = 3;
+let weeklyPlayset = loadWeeklyPlayset();
 let resizeTimer = null;
 
 /* Practice-sheet zoom state */
@@ -64,6 +79,182 @@ let liveMusicLibrary = [...musicLibrary];
 let sortedLibrary = [...liveMusicLibrary].sort((a, b) =>
   a.title.localeCompare(b.title, undefined, { sensitivity: "base" })
 );
+
+function loadWeeklyPlayset() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PLAYSET_STORAGE_KEY) || "[]");
+    return Array.isArray(saved) ? saved.slice(0, PLAYSET_MAX) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveWeeklyPlayset() {
+  localStorage.setItem(PLAYSET_STORAGE_KEY, JSON.stringify(weeklyPlayset));
+}
+
+function getPlaysetSongs() {
+  return weeklyPlayset
+    .map((id) => liveMusicLibrary.find((song) => song.id === id))
+    .filter(Boolean);
+}
+
+function renderWeeklyPlayset() {
+  const songs = getPlaysetSongs();
+
+  playsetSlots.innerHTML = Array.from({ length: PLAYSET_MAX }, (_, index) => {
+    const song = songs[index];
+
+    if (!song) {
+      return `
+        <div class="playset-slot empty">
+          <span class="playset-number">${index + 1}</span>
+          <span class="playset-empty-label">Open a song and tap Add to Set</span>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="playset-slot">
+        <button class="playset-song-button" type="button" data-playset-open="${song.id}">
+          <span class="playset-number">${index + 1}</span>
+          <span class="playset-song-copy">
+            <strong>${song.title}</strong>
+            <small>${song.composer || "Worship song"}</small>
+          </span>
+        </button>
+        <button class="playset-remove-button" type="button" data-playset-remove="${song.id}" aria-label="Remove ${song.title} from weekly set">×</button>
+      </div>
+    `;
+  }).join("");
+
+  playsetHint.textContent = songs.length
+    ? `${songs.length} of ${PLAYSET_MAX} songs selected • saved on this device`
+    : `Add up to ${PLAYSET_MAX} songs from the library.`;
+
+  clearPlaysetButton.classList.toggle("hidden", songs.length === 0);
+
+  playsetSlots.querySelectorAll("[data-playset-open]").forEach((button) => {
+    button.addEventListener("click", () => openSong(button.dataset.playsetOpen));
+  });
+
+  playsetSlots.querySelectorAll("[data-playset-remove]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      removeSongFromPlayset(button.dataset.playsetRemove);
+    });
+  });
+
+  updatePlaysetToggleButton();
+}
+
+function updatePlaysetToggleButton() {
+  if (!playsetToggleButton || !activeSong) return;
+
+  const inSet = weeklyPlayset.includes(activeSong.id);
+  playsetToggleButton.textContent = inSet ? "Remove from Set" : "Add to Set";
+  playsetToggleButton.classList.toggle("active", inSet);
+}
+
+function addSongToPlayset(songId) {
+  if (weeklyPlayset.includes(songId)) return true;
+
+  if (weeklyPlayset.length >= PLAYSET_MAX) {
+    window.alert("Your weekly playset already has 3 songs. Remove one before adding another.");
+    return false;
+  }
+
+  weeklyPlayset.push(songId);
+  saveWeeklyPlayset();
+  renderWeeklyPlayset();
+  return true;
+}
+
+function removeSongFromPlayset(songId) {
+  weeklyPlayset = weeklyPlayset.filter((id) => id !== songId);
+  saveWeeklyPlayset();
+  renderWeeklyPlayset();
+}
+
+function toggleActiveSongInPlayset() {
+  if (!activeSong) return;
+
+  if (weeklyPlayset.includes(activeSong.id)) {
+    removeSongFromPlayset(activeSong.id);
+  } else {
+    addSongToPlayset(activeSong.id);
+  }
+
+  updatePlaysetToggleButton();
+}
+
+function clearWeeklyPlayset() {
+  if (!weeklyPlayset.length) return;
+
+  if (!window.confirm("Reset this week's playset?")) return;
+
+  weeklyPlayset = [];
+  saveWeeklyPlayset();
+  renderWeeklyPlayset();
+}
+
+function friendlyTrackType(track) {
+  const type = (track.type || "practice").toLowerCase();
+
+  const labels = {
+    practice: "Practice Track",
+    bass: "Bass Part",
+    drums: "Drums",
+    live: "Live / Full Band"
+  };
+
+  return labels[type] || track.label || "Audio Track";
+}
+
+function closeTrackPicker() {
+  trackPicker.classList.add("hidden");
+  document.body.classList.remove("track-picker-open");
+}
+
+function choosePracticeTrack(track) {
+  activePracticeTrack = track;
+  setAudioTrack(activeSong, track);
+  closeTrackPicker();
+  enterPracticeModeWithSelectedTrack();
+}
+
+function openTrackPicker() {
+  if (!activeSong) return;
+
+  const tracks = activeSong.audio || [];
+  if (!tracks.length) return;
+
+  if (tracks.length === 1) {
+    choosePracticeTrack(tracks[0]);
+    return;
+  }
+
+  trackPickerSong.textContent = activeSong.title;
+
+  trackPickerOptions.innerHTML = tracks.map((track, index) => `
+    <button class="track-picker-option" type="button" data-track-index="${index}">
+      <span class="track-picker-icon">${(track.type || "practice") === "live" ? "♫" : "▶"}</span>
+      <span>
+        <strong>${friendlyTrackType(track)}</strong>
+        <small>${track.label || friendlyTrackType(track)}</small>
+      </span>
+    </button>
+  `).join("");
+
+  trackPickerOptions.querySelectorAll("[data-track-index]").forEach((button) => {
+    button.addEventListener("click", () => {
+      choosePracticeTrack(tracks[Number(button.dataset.trackIndex)]);
+    });
+  });
+
+  trackPicker.classList.remove("hidden");
+  document.body.classList.add("track-picker-open");
+}
 
 function normalized(value = "") {
   return value.toLowerCase().trim();
@@ -412,36 +603,32 @@ function skipAudio(seconds) {
   updateAudioProgress();
 }
 
-function setAudio(song) {
-  const tracks = song.audio || [];
-
+function setAudioTrack(song, track) {
   audioPlayer.pause();
 
-  if (!tracks.length) {
+  if (!song || !track) {
+    activePracticeTrack = null;
     audioPlayer.removeAttribute("src");
     audioPlayer.load();
     resetPracticePlayerUi();
-
     audioDock.classList.add("hidden");
     songView.classList.remove("has-audio");
-
     return;
   }
 
-  const track = tracks[0];
-
-  audioTrackTitle.textContent = `${song.title} — ${track.label}`;
+  activePracticeTrack = track;
+  audioTrackTitle.textContent = `${song.title} — ${friendlyTrackType(track)}`;
   audioPlayer.src = track.file;
   audioPlayer.load();
-
   resetPracticePlayerUi();
 
-  /*
-    Load the track now, but keep the player hidden on the normal
-    View / Print landing page. enterPracticeMode() reveals it.
-  */
   audioDock.classList.add("hidden");
   songView.classList.remove("has-audio");
+}
+
+function setAudio(song) {
+  const tracks = song.audio || [];
+  setAudioTrack(song, tracks[0] || null);
 }
 
 
@@ -589,7 +776,7 @@ function handlePracticeTouchEnd(event) {
   }
 }
 
-function enterPracticeMode() {
+function enterPracticeModeWithSelectedTrack() {
   if (!activeSong || !(activeSong.audio || []).length) return;
 
   resetPracticeZoom();
@@ -662,6 +849,7 @@ function exitPracticeMode() {
 
 function populateSongView(song) {
   activeSong = song;
+  updatePlaysetToggleButton();
 
   songTitle.textContent = song.title;
 
@@ -936,6 +1124,7 @@ async function refreshLibrary() {
     );
 
     renderLibrary(searchInput.value);
+    renderWeeklyPlayset();
 
     const serverDate = result.lastModified
       ? formatDateTime(result.lastModified)
@@ -987,7 +1176,13 @@ backButton.addEventListener("click", () => {
 });
 
 sharePrintButton.addEventListener("click", shareCurrentDocument);
-practiceButton.addEventListener("click", enterPracticeMode);
+practiceButton.addEventListener("click", openTrackPicker);
+playsetToggleButton.addEventListener("click", toggleActiveSongInPlayset);
+clearPlaysetButton.addEventListener("click", clearWeeklyPlayset);
+closeTrackPickerButton.addEventListener("click", closeTrackPicker);
+trackPicker.addEventListener("click", (event) => {
+  if (event.target === trackPicker) closeTrackPicker();
+});
 exitPracticeButton.addEventListener("click", exitPracticeMode);
 refreshLibraryButton.addEventListener("click", refreshLibrary);
 
@@ -1083,6 +1278,7 @@ documentPanel.addEventListener(
    ========================================================== */
 
 renderLibrary();
+renderWeeklyPlayset();
 
 const previousRefresh = localStorage.getItem(
   "churchMusicLibraryLastRefresh"
