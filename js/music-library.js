@@ -974,7 +974,13 @@ const musicLibrary = [
     title: "Doxology (God Be Praised)",
     composer: "",
     tags: ["worship"],
-    documents: [],
+    documents: [
+      {
+        label: "Sheet Music",
+        type: "pdf",
+        file: "documents/Doxology (God Be Praised) (G).pdf"
+      }
+    ],
     audio: [
       {
         label: "Practice Track",
@@ -988,7 +994,13 @@ const musicLibrary = [
     title: "Good Good Father",
     composer: "",
     tags: ["worship"],
-    documents: [],
+    documents: [
+      {
+        label: "Sheet Music",
+        type: "pdf",
+        file: "documents/Good Good Father.pdf"
+      }
+    ],
     audio: [
       {
         label: "Practice Track",
@@ -1002,7 +1014,13 @@ const musicLibrary = [
     title: "This is Amazing Grace (G)",
     composer: "",
     tags: ["worship"],
-    documents: [],
+    documents: [
+      {
+        label: "Sheet Music",
+        type: "pdf",
+        file: "documents/This is Amazing Grace (G).pdf"
+      }
+    ],
     audio: [
       {
         label: "Practice Track",
