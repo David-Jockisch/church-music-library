@@ -1,0 +1,15 @@
+{
+  "name": "church-music-library-tools",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Local importer and Cloudflare R2 migration tools for Church Music Library",
+  "scripts": {
+    "import": "node tools/importer/church-music-importer.js",
+    "migrate:dry": "node tools/r2/migrate-to-r2.js",
+    "migrate": "node tools/r2/migrate-to-r2.js --upload"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.0.0",
+    "dotenv": "^17.0.0"
+  }
+}

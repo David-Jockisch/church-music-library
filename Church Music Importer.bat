@@ -1,6 +1,5 @@
 @echo off
-title Church Music Importer
-
+title Church Music Importer - R2
 cd /d "%~dp0"
 
 echo.
@@ -10,8 +9,7 @@ echo.
 node "tools\importer\church-music-importer.js"
 
 if errorlevel 1 (
-    echo.
-    echo The importer exited with an error.
-    echo.
-    pause
+  echo.
+  echo Importer exited with an error.
+  pause
 )
