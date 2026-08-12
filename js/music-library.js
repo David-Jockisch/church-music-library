@@ -1027,5 +1027,25 @@ const musicLibrary = [
         file: "audio/This is Amazing Grace (G).mp3"
       }
     ]
+  },
+
+  {
+    id: "let-it-be-said-of-us",
+    title: "Let It Be Said of Us",
+    composer: "",
+    tags: ["worship"],
+    documents: [
+      {
+        label: "Sheet Music",
+        type: "pdf",
+        file: "documents/Let It Be Said of Us.pdf"
+      }
+    ],
+    audio: [
+      {
+        label: "Practice Track",
+        file: "audio/Let It Be Said of Us.mp3"
+      }
+    ]
   }
 ];
