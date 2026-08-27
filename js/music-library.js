@@ -1186,5 +1186,49 @@ const musicLibrary = [
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Enough.m4a"
       }
     ]
+  },
+  {
+    "id": "glorious-day",
+    "title": "Glorious Day",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Glorious%20Day.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Glorious%20Day.mp3"
+      }
+    ]
+  },
+  {
+    "id": "how-deep-the-fathers-love-for-us",
+    "title": "How Deep the Father's Love for Us",
+    "composer": "Stuart Townend",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/How%20Deep%20the%20Father's%20Love%20for%20Us.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/How%20Deep%20the%20Father's%20Love%20for%20Us.mp3"
+      }
+    ]
   }
 ];
