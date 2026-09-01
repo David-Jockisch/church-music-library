@@ -1230,5 +1230,49 @@ const musicLibrary = [
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/How%20Deep%20the%20Father's%20Love%20for%20Us.mp3"
       }
     ]
+  },
+  {
+    "id": "come-just-as-you-are",
+    "title": "Come Just As You Are",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Come%20Just%20as%20You%20Are.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Come%20Just%20As%20You%20Are.mp3"
+      }
+    ]
+  },
+  {
+    "id": "his-banner-over-me",
+    "title": "His Banner Over Me",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/His%20Banner%20Over%20Me.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/His%20Banner%20Over%20Me.mp3"
+      }
+    ]
   }
 ];
