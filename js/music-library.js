@@ -830,7 +830,7 @@ const musicLibrary = [
     "audio": [
       {
         "label": "Practice Track",
-        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Blessed%20assurance_.m4a",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Blessed%20Assurance.mp3",
         "type": "practice"
       }
     ]
@@ -1272,6 +1272,50 @@ const musicLibrary = [
         "type": "practice",
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/His%20Banner%20Over%20Me.mp3"
+      }
+    ]
+  },
+  {
+    "id": "it-is-well-through-it-all-bass",
+    "title": "It is Well (Through it All) Bass",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/It%20is%20Well%20(Through%20it%20All).pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/It%20is%20Well%20(Through%20it%20All).mp3"
+      }
+    ]
+  },
+  {
+    "id": "let-your-kingdom-come",
+    "title": "Let Your Kingdom Come",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Let%20Your%20Kingdom%20Come.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Let%20Your%20Kingdom%20Come.mp3"
       }
     ]
   }
