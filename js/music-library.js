@@ -1276,8 +1276,8 @@ const musicLibrary = [
     ]
   },
   {
-    "id": "it-is-well-through-it-all-bass",
-    "title": "It is Well (Through it All) Bass",
+    "id": "it-is-well-through-it-all",
+    "title": "It is Well (Through it All)",
     "composer": "",
     "tags": [
       "worship"
