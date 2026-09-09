@@ -1318,5 +1318,115 @@ const musicLibrary = [
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Blessed%20Assurance.mp3"
       }
     ]
+  },
+  {
+    "id": "cornerstone",
+    "title": "Cornerstone",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Cornerstone.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Cornerstone.mp3"
+      }
+    ]
+  },
+  {
+    "id": "god-moves-in-a-mysterious-way",
+    "title": "God Moves in a Mysterious Way",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/God%20Moves%20in%20a%20Mysterious%20Way.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/God%20Moves%20in%20a%20Mysterious%20Way.mp3"
+      }
+    ]
+  },
+  {
+    "id": "holy-is-the-lord",
+    "title": "Holy is the Lord",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Holy%20is%20the%20Lord.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Holy%20is%20the%20Lord.mp3"
+      }
+    ]
+  },
+  {
+    "id": "how-great-thou-art",
+    "title": "How Great Thou Art",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/How%20Great%20Thou%20Art.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/How%20Great%20Thou%20Art.mp3"
+      }
+    ]
+  },
+  {
+    "id": "in-christ-alone",
+    "title": "In Christ Alone",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/In%20Christ%20Alone.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/In%20Christ%20Alone.mp3"
+      }
+    ]
   }
 ];
