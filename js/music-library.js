@@ -814,28 +814,6 @@ const musicLibrary = [
     ]
   },
   {
-    "id": "blessed-assurance",
-    "title": "Blessed Assurance",
-    "composer": "Third Day",
-    "tags": [
-      "worship"
-    ],
-    "documents": [
-      {
-        "label": "Sheet Music",
-        "type": "pdf",
-        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Blessed%20Assurance.pdf"
-      }
-    ],
-    "audio": [
-      {
-        "label": "Practice Track",
-        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Blessed%20Assurance.mp3",
-        "type": "practice"
-      }
-    ]
-  },
-  {
     "id": "heart-after-you",
     "title": "Heart After You",
     "composer": "Luke Wood",
@@ -1316,6 +1294,28 @@ const musicLibrary = [
         "type": "practice",
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Let%20Your%20Kingdom%20Come.mp3"
+      }
+    ]
+  },
+  {
+    "id": "blessed-assurance",
+    "title": "Blessed Assurance",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Blessed%20Assurance.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Blessed%20Assurance.mp3"
       }
     ]
   }
