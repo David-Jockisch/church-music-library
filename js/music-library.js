@@ -1052,6 +1052,11 @@ const musicLibrary = [
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Trading%20My%20Sorrows.mp3",
         "type": "practice"
+      },
+      {
+        "type": "live",
+        "label": "Live Service",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/live/Trading%20My%20Sorrows%20(Live).aac"
       }
     ]
   },
@@ -1228,6 +1233,11 @@ const musicLibrary = [
         "type": "practice",
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Come%20Just%20As%20You%20Are.mp3"
+      },
+      {
+        "type": "live",
+        "label": "Live Service",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/live/Come%20Just%20as%20You%20Are%20(Live).aac"
       }
     ]
   },
@@ -1250,6 +1260,11 @@ const musicLibrary = [
         "type": "practice",
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/His%20Banner%20Over%20Me.mp3"
+      },
+      {
+        "type": "live",
+        "label": "Live Service",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/live/His%20Banner%20Over%20Me%20(Live).aac"
       }
     ]
   },
