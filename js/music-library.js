@@ -289,6 +289,11 @@ const musicLibrary = [
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Beautiful%20One.mp3",
         "type": "practice"
+      },
+      {
+        "type": "live",
+        "label": "Live Service",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/live/Beautiful%20One%20(Live).aac"
       }
     ]
   },
@@ -1167,6 +1172,11 @@ const musicLibrary = [
         "type": "practice",
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Enough.m4a"
+      },
+      {
+        "type": "live",
+        "label": "Live Service",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/live/Enough%20(Live).aac"
       }
     ]
   },
@@ -1189,6 +1199,11 @@ const musicLibrary = [
         "type": "practice",
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Glorious%20Day.mp3"
+      },
+      {
+        "type": "live",
+        "label": "Live Service",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/live/Glorious%20Day%20(Live).aac"
       }
     ]
   },
@@ -1211,6 +1226,11 @@ const musicLibrary = [
         "type": "practice",
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/How%20Deep%20the%20Father's%20Love%20for%20Us.mp3"
+      },
+      {
+        "type": "live",
+        "label": "Live Service",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/live/How%20Deep%20the%20Father's%20Love%20for%20Us%20(Live).aac"
       }
     ]
   },
