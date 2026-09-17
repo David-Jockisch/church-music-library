@@ -1463,5 +1463,71 @@ const musicLibrary = [
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/In%20Christ%20Alone.mp3"
       }
     ]
+  },
+  {
+    "id": "come-now-is-the-time-to-worship",
+    "title": "Come, Now is the Time to Worship",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Come%2C%20Now%20is%20the%20Time%20to%20Worshp.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Come%2C%20Now%20is%20the%20Time%20to%20Worship.mp3"
+      }
+    ]
+  },
+  {
+    "id": "sing-to-the-king",
+    "title": "Sing to the King",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Sing%20to%20the%20King.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Sing%20to%20the%20King.mp3"
+      }
+    ]
+  },
+  {
+    "id": "worthy-of-it-all",
+    "title": "Worthy of it All",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Worthy%20of%20it%20All.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Worthy%20of%20it%20All.mp3"
+      }
+    ]
   }
 ];
