@@ -2687,3 +2687,30 @@ body:not(.practice-mode) .song-header-actions {
     font-size: .68rem !important;
   }
 }
+
+/* Keep sheet selection beside Quit in the fixed practice dock. */
+.audio-dock .choose-sheet-button {
+  flex: 0 1 auto;
+  min-height: 40px;
+  max-width: 38%;
+  padding: 6px 10px;
+  overflow: hidden;
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.audio-dock .choose-sheet-button.hidden { display: none !important; }
+#currentSheetLabel { font-weight: 500; }
+@media (max-width: 650px) {
+  .audio-dock .choose-sheet-button { min-height: 36px; font-size: .7rem; }
+  #currentSheetLabel { display: none; }
+}
+
+/* The normal song view has a bottom dock; keep its sheet choices there. */
+body:not(.practice-mode) .resource-actions { display: none !important; }

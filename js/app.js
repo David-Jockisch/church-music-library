@@ -15,9 +15,12 @@ const songTitle = document.getElementById("songTitle");
 const songMeta = document.getElementById("songMeta");
 const resourceActions = document.getElementById("resourceActions");
 const sharePrintButton = document.getElementById("sharePrintButton");
+const viewSheetButton = document.getElementById("viewSheetButton");
 const practiceButton = document.getElementById("practiceButton");
 const playsetToggleButton = document.getElementById("playsetToggleButton");
 const exitPracticeButton = document.getElementById("exitPracticeButton");
+const chooseSheetButton = document.getElementById("chooseSheetButton");
+const currentSheetLabel = document.getElementById("currentSheetLabel");
 
 const playsetSlots = document.getElementById("playsetSlots");
 const playsetHint = document.getElementById("playsetHint");
@@ -227,7 +230,16 @@ function selectPracticeSheet(resource) {
   pendingPracticeSheet = resource || null;
   if (resource) {
     openDocument(resource, findResourceButton(resource));
+    resetPracticeZoom();
+    documentPanel.scrollTo(0, 0);
   }
+  updateSheetButton();
+}
+
+function updateSheetButton() {
+  const sheets = (activeSong?.documents || []).filter((item) => item.type === "pdf");
+  chooseSheetButton.classList.toggle("hidden", sheets.length < 2);
+  currentSheetLabel.textContent = pendingPracticeSheet?.label || activeResource?.label || "";
 }
 
 function choosePracticeTrack(track) {
@@ -284,7 +296,9 @@ function showSheetChoices(sheets) {
   trackPickerOptions.querySelectorAll("[data-sheet-index]").forEach((button) => {
     button.addEventListener("click", () => {
       selectPracticeSheet(sheets[Number(button.dataset.sheetIndex)]);
-      showAudioChoices();
+      if (document.body.classList.contains("practice-mode")) closeTrackPicker();
+      else if (document.body.dataset.sheetPickerMode === "view") closeTrackPicker();
+      else showAudioChoices();
     });
   });
 
@@ -863,6 +877,7 @@ function enterPracticeModeWithSelectedTrack() {
   }
 
   audioDock.classList.remove("hidden");
+  updateSheetButton();
 
   window.scrollTo({
     top: 0,
@@ -905,6 +920,8 @@ function exitPracticeMode() {
 
 function populateSongView(song) {
   activeSong = song;
+  pendingPracticeSheet = null;
+  updateSheetButton();
   updatePlaysetToggleButton();
 
   songTitle.textContent = song.title;
@@ -920,6 +937,7 @@ function populateSongView(song) {
 
   const documents = song.documents || [];
   const hasAudio = (song.audio || []).length > 0;
+  viewSheetButton.classList.toggle("hidden", documents.filter((doc) => doc.type === "pdf").length < 2);
 
   /*
     Practice is an AUDIO feature. It remains available even when a song
@@ -1268,6 +1286,19 @@ window.addEventListener("resize", () => {
 /* ==========================================================
    PRACTICE AUDIO CONTROLS
    ========================================================== */
+
+viewSheetButton.addEventListener("click", () => {
+  if (!activeSong) return;
+  document.body.dataset.sheetPickerMode = "view";
+  showSheetChoices((activeSong.documents || []).filter((item) => item.type === "pdf"));
+});
+
+chooseSheetButton.addEventListener("click", () => {
+  document.body.dataset.sheetPickerMode = "practice";
+  if (!activeSong) return;
+  const sheets = (activeSong.documents || []).filter((item) => item.type === "pdf");
+  if (sheets.length > 1) showSheetChoices(sheets);
+});
 
 fitMusicButton.addEventListener("click", resetPracticeZoom);
 
