@@ -156,15 +156,47 @@ function stripKeyMarkers(value) {
     .trim();
 }
 
+function detectSheetInfo(filename) {
+  const base = stripExtension(filename);
+  const patterns = [
+    { regex: /(?:^|[\s\-–—_(])(?:bass|bass\s+guitar)(?:\s+(?:sheet|music|part))?\)?\s*$/i, sheetType: "bass", label: "Bass" },
+    { regex: /(?:^|[\s\-–—_(])(?:rhythm\s+guitar|guitar)(?:\s+(?:sheet|music|part))?(?:\s*[-–—]?\s*capo\s*(\d+))?\)?\s*$/i, sheetType: "guitar", label: "Guitar" },
+    { regex: /(?:^|[\s\-–—_(])(?:chords?|chord\s+chart)(?:\s+(?:sheet|music))?\)?\s*$/i, sheetType: "chords", label: "Chords" },
+    { regex: /(?:^|[\s\-–—_(])(?:lead\s+sheet|lead)(?:\s+(?:sheet|music))?\)?\s*$/i, sheetType: "lead", label: "Lead Sheet" }
+  ];
+
+  for (const pattern of patterns) {
+    const match = base.match(pattern.regex);
+    if (!match) continue;
+    let label = pattern.label;
+    if (pattern.sheetType === "guitar" && match[1]) label = `Guitar — Capo ${match[1]}`;
+    return {
+      sheetType: pattern.sheetType,
+      label,
+      title: base.replace(pattern.regex, "").replace(/[\s\-–—_]+$/, "").trim()
+    };
+  }
+
+  // Also recognize filenames such as "Song - Guitar Capo 2" where the
+  // optional words make the strict suffix expression awkward.
+  const guitar = base.match(/^(.*?)\s*[-–—_]\s*(?:rhythm\s+)?guitar(?:\s+(?:sheet|music|part))?\s*[-–—]?\s*capo\s*(\d+)\s*$/i);
+  if (guitar) return { sheetType: "guitar", label: `Guitar — Capo ${guitar[2]}`, title: guitar[1].trim() };
+
+  return { sheetType: "sheet", label: "Sheet Music", title: base };
+}
+
 function detectTrackType(filename) {
   const ext = path.extname(filename).toLowerCase();
 
   if (DOCUMENT_EXTENSIONS.has(ext)) {
+    const sheet = detectSheetInfo(filename);
     return {
       kind: "sheet",
       type: "sheet",
       folder: "sheet",
-      label: "Sheet Music"
+      label: sheet.label,
+      sheetType: sheet.sheetType,
+      sheetTitle: sheet.title
     };
   }
 
@@ -241,7 +273,9 @@ function stripTrackSuffix(value, trackType) {
 function normalizeForMatch(value, trackType = null) {
   let title = stripExtension(value);
 
-  if (trackType && trackType !== "sheet") {
+  if (trackType === "sheet") {
+    title = detectSheetInfo(value).title;
+  } else if (trackType) {
     title = stripTrackSuffix(title, trackType);
   }
 
@@ -261,7 +295,9 @@ function normalizeForMatch(value, trackType = null) {
 function canonicalTitleFromFilename(filename, trackType) {
   let title = stripExtension(filename);
 
-  if (trackType && trackType !== "sheet") {
+  if (trackType === "sheet") {
+    title = detectSheetInfo(filename).title;
+  } else if (trackType) {
     title = stripTrackSuffix(title, trackType);
   }
 
@@ -586,33 +622,34 @@ function addOrUpdateSongAsset(
     type,
     label,
     publicUrl,
-    replaceSameType = false
+    replaceSameType = false,
+    sheetType = "sheet"
   }
 ) {
   if (type === "sheet") {
-    song.documents = Array.isArray(song.documents)
-      ? song.documents
-      : [];
+    song.documents = Array.isArray(song.documents) ? song.documents : [];
 
-    const existing =
-      song.documents.find(
-        (item) =>
-          item.type === "pdf" ||
-          item.label === "Sheet Music"
+    // Multiple sheet-music PDFs are valid. Only replace a sheet when the
+    // importer explicitly asks to replace the same sheet type.
+    if (replaceSameType) {
+      const existing = song.documents.find(
+        (item) => (item.sheetType || "sheet") === (sheetType)
       );
-
-    if (existing) {
-      existing.label = "Sheet Music";
-      existing.type = "pdf";
-      existing.file = publicUrl;
-    } else {
-      song.documents.push({
-        label: "Sheet Music",
-        type: "pdf",
-        file: publicUrl
-      });
+      if (existing) {
+        existing.label = label || "Sheet Music";
+        existing.type = "pdf";
+        existing.sheetType = sheetType;
+        existing.file = publicUrl;
+        return;
+      }
     }
 
+    song.documents.push({
+      label: label || "Sheet Music",
+      type: "pdf",
+      sheetType: sheetType,
+      file: publicUrl
+    });
     return;
   }
 

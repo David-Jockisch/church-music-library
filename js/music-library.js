@@ -1553,23 +1553,7 @@ const musicLibrary = [
       }
     ]
   },
-  {
-    "id": "nothing-but-the-blood-guitar-capo",
-    "title": "Nothing but the Blood (guitar capo)",
-    "composer": "",
-    "tags": [
-      "worship"
-    ],
-    "documents": [
-      {
-        "label": "Sheet Music",
-        "type": "pdf",
-        "sheetType": "sheet",
-        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Nothing%20but%20the%20Blood%20(guitar%20capo).pdf"
-      }
-    ],
-    "audio": []
-  },
+ 
   {
     "id": "nothing-but-the-blood",
     "title": "Nothing but the Blood",
@@ -1583,6 +1567,12 @@ const musicLibrary = [
         "type": "pdf",
         "sheetType": "sheet",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Nothing%20but%20the%20Blood.pdf"
+      },
+        {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Nothing%20but%20the%20Blood%20(guitar%20capo).pdf"
       }
     ],
     "audio": [

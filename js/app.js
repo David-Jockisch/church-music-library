@@ -54,6 +54,7 @@ let activePdfResource = null;
 let activeResource = null;
 let activeSong = null;
 let activePracticeTrack = null;
+let pendingPracticeSheet = null;
 let pdfRenderToken = 0;
 
 const PLAYSET_STORAGE_KEY = "churchMusicWeeklyPlayset";
@@ -216,6 +217,19 @@ function closeTrackPicker() {
   document.body.classList.remove("track-picker-open");
 }
 
+function findResourceButton(resource) {
+  return [...resourceActions.querySelectorAll(".resource-button")].find(
+    (button) => button.dataset.resourceFile === resource.file
+  );
+}
+
+function selectPracticeSheet(resource) {
+  pendingPracticeSheet = resource || null;
+  if (resource) {
+    openDocument(resource, findResourceButton(resource));
+  }
+}
+
 function choosePracticeTrack(track) {
   activePracticeTrack = track;
   setAudioTrack(activeSong, track);
@@ -223,10 +237,8 @@ function choosePracticeTrack(track) {
   enterPracticeModeWithSelectedTrack();
 }
 
-function openTrackPicker() {
-  if (!activeSong) return;
-
-  const tracks = activeSong.audio || [];
+function showAudioChoices() {
+  const tracks = activeSong?.audio || [];
   if (!tracks.length) return;
 
   if (tracks.length === 1) {
@@ -235,7 +247,7 @@ function openTrackPicker() {
   }
 
   trackPickerSong.textContent = activeSong.title;
-
+  document.getElementById("trackPickerTitle").textContent = "Choose Audio";
   trackPickerOptions.innerHTML = tracks.map((track, index) => `
     <button class="track-picker-option" type="button" data-track-index="${index}">
       <span class="track-picker-icon">${(track.type || "practice") === "live" ? "♫" : "▶"}</span>
@@ -254,6 +266,50 @@ function openTrackPicker() {
 
   trackPicker.classList.remove("hidden");
   document.body.classList.add("track-picker-open");
+}
+
+function showSheetChoices(sheets) {
+  trackPickerSong.textContent = activeSong.title;
+  document.getElementById("trackPickerTitle").textContent = "Choose Sheet Music";
+  trackPickerOptions.innerHTML = sheets.map((sheet, index) => `
+    <button class="track-picker-option" type="button" data-sheet-index="${index}">
+      <span class="track-picker-icon">▤</span>
+      <span>
+        <strong>${sheet.label || "Sheet Music"}</strong>
+        <small>Use this sheet for Practice</small>
+      </span>
+    </button>
+  `).join("");
+
+  trackPickerOptions.querySelectorAll("[data-sheet-index]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectPracticeSheet(sheets[Number(button.dataset.sheetIndex)]);
+      showAudioChoices();
+    });
+  });
+
+  trackPicker.classList.remove("hidden");
+  document.body.classList.add("track-picker-open");
+}
+
+function openTrackPicker() {
+  if (!activeSong) return;
+  const tracks = activeSong.audio || [];
+  if (!tracks.length) return;
+
+  const sheets = (activeSong.documents || []).filter(
+    (resource) => resource.type === "pdf"
+  );
+
+  // With one PDF, keep the old fast path. With multiple PDFs, ask which
+  // sheet to use before asking which audio track to use.
+  if (sheets.length > 1) {
+    showSheetChoices(sheets);
+    return;
+  }
+
+  if (sheets.length === 1) selectPracticeSheet(sheets[0]);
+  showAudioChoices();
 }
 
 function normalized(value = "") {
@@ -882,6 +938,7 @@ function populateSongView(song) {
     button.className = "resource-button";
     button.type = "button";
     button.textContent = resource.label;
+    button.dataset.resourceFile = resource.file;
 
     button.addEventListener("click", () => {
       openDocument(resource, button);

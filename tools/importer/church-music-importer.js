@@ -28,313 +28,190 @@ function ask(question) {
   });
 }
 
-async function pause(message = "Press Enter for the next file...") {
-  await ask(message);
-}
-
-function line(char = "=", width = 68) {
-  return char.repeat(width);
-}
-
-function clear() {
-  if (process.stdout.isTTY) console.clear();
-}
-
-function printHeader(subtitle = "Import music into the church library") {
-  clear();
-  console.log(line());
-  console.log("  CHURCH MUSIC IMPORTER");
-  console.log(`  ${subtitle}`);
-  console.log(line());
-  console.log(`  Inbox: ${CONFIG.inboxDir}`);
-  console.log("");
-}
-
-function printStep(current, total, filename) {
-  printHeader("Reviewing files that need attention");
-  console.log(line("-"));
-  console.log(`  FILE ${current} OF ${total}`);
-  console.log(`  ${filename}`);
-  console.log(line("-"));
-}
-
-function shortType(asset) {
-  return asset.type === "sheet" ? "Sheet Music" : asset.label;
-}
-
+function line(char = "=", width = 68) { return char.repeat(width); }
+function shortType(asset) { return asset.type === "sheet" ? asset.label : asset.label; }
 function findExistingAsset(song, asset) {
-  if (asset.type === "sheet") {
-    return (song.documents || []).some(
-      (item) =>
-        item.file &&
-        item.file.includes(encodeURIComponent(asset.filename))
-    );
-  }
-
-  return (song.audio || []).some(
-    (item) =>
-      item.file &&
-      item.file.includes(encodeURIComponent(asset.filename))
-  );
-}
-
-function getInitialPlan(asset, library) {
-  const matches = findSongMatches(library, asset.filename, asset.type);
-
-  if (matches.exact) {
-    const duplicate = findExistingAsset(matches.exact.song, asset);
-    return {
-      status: duplicate ? "Already imported" : "Exact match",
-      target: matches.exact.song.title,
-      score: 100
-    };
-  }
-
-  const best = matches.suggestions[0];
-  if (best && best.score >= 0.82) {
-    return {
-      status: "Needs confirmation",
-      target: best.song.title,
-      score: Math.round(best.score * 100)
-    };
-  }
-
-  return {
-    status: "New song",
-    target: asset.inferredTitle,
-    score: null
-  };
-}
-
-function classifyAssets(assets, library) {
-  const existing = [];
-  const actionable = [];
-
-  for (const asset of assets) {
-    const plan = getInitialPlan(asset, library);
-    if (plan.status === "Already imported") {
-      existing.push({ asset, plan });
-    } else {
-      actionable.push({ asset, plan });
-    }
-  }
-
-  return { existing, actionable };
-}
-
-function printScanSummary(actionable, existingCount) {
-  console.log(`Checked ${actionable.length + existingCount} supported file${actionable.length + existingCount === 1 ? "" : "s"}.`);
-  console.log("");
-
-  if (existingCount) {
-    console.log(`✓ ${existingCount} file${existingCount === 1 ? "" : "s"} already in the library — hidden from review.`);
-    console.log("");
-  }
-
-  if (!actionable.length) {
-    console.log("Everything in the inbox is already imported.");
-    console.log("There is nothing you need to review.");
-    return;
-  }
-
-  console.log(`NEEDS YOUR ATTENTION: ${actionable.length}`);
-  console.log(line("-"));
-
-  actionable.forEach(({ asset, plan }, index) => {
-    const score = plan.score === null ? "" : ` (${plan.score}%)`;
-
-    console.log(`${String(index + 1).padStart(2, " ")}. ${asset.filename}`);
-    console.log(`    ${plan.status}${score} → ${plan.target}`);
-    if (index !== actionable.length - 1) console.log("");
+  const entries = asset.type === "sheet" ? song.documents || [] : song.audio || [];
+  return entries.some((item) => {
+    try { return decodeURIComponent(new URL(item.file).pathname).endsWith(`/${asset.folder}/${asset.filename}`); }
+    catch { return false; }
   });
-
-  console.log(line("-"));
-  console.log("");
-  console.log("Existing duplicates were checked automatically and will not be shown again.");
-  console.log("Nothing has been uploaded or changed yet.");
 }
-
-async function chooseSong(asset, library) {
-  const matches = findSongMatches(library, asset.filename, asset.type);
-
-  if (matches.exact) {
-    console.log(`Matched automatically: ${matches.exact.song.title}`);
-    return {
-      song: matches.exact.song,
-      confidence: "exact"
-    };
-  }
-
-  const strong = matches.suggestions.filter(
-    (candidate) => candidate.score >= 0.82
-  );
-
-  if (strong.length) {
-    console.log("");
-    console.log("I found possible song matches:");
-    console.log("");
-
-    strong.forEach((candidate, index) => {
-      console.log(
-        `  [${index + 1}] ${candidate.song.title} — ${Math.round(candidate.score * 100)}% match`
-      );
-    });
-
-    console.log("  [N] Create a new song instead");
-    console.log("  [S] Skip this file");
-    console.log("");
-
-    while (true) {
-      const choice = (await ask("Your choice: ")).toLowerCase();
-
-      if (choice === "s") return null;
-      if (choice === "n") {
-        return { song: null, confidence: "new" };
-      }
-
-      const index = Number.parseInt(choice, 10) - 1;
-      if (Number.isInteger(index) && strong[index]) {
-        return {
-          song: strong[index].song,
-          confidence: "confirmed"
-        };
-      }
-
-      console.log("Please choose one of the options shown above.");
-    }
-  }
-
-  console.log("No existing song matched closely enough.");
-  return {
-    song: null,
-    confidence: "new"
-  };
+function sameKind(song, asset) {
+  return asset.type === "sheet"
+    ? (song.documents || []).filter((item) => (item.sheetType || "sheet") === asset.sheetType)
+    : (song.audio || []).filter((item) => (item.type || "practice") === asset.type);
 }
-
-async function createNewSong(asset, library) {
-  console.log("");
-  console.log("CREATE NEW SONG");
-  console.log(`Suggested title: ${asset.inferredTitle}`);
-  console.log("");
-
-  const titleAnswer = await ask(`Title [${asset.inferredTitle}]: `);
-  const title = titleAnswer || asset.inferredTitle;
-  const artist = await ask("Artist / composer (optional): ");
-
-  const song = {
-    id: makeId(title),
-    title,
-    composer: artist,
-    tags: ["worship"],
-    documents: [],
-    audio: []
-  };
-
-  library.push(song);
-  return song;
+function initialQueue(assets, library) {
+  return assets.map((asset) => {
+    const matches = findSongMatches(library, asset.filename, asset.type);
+    const song = matches.exact?.song || (matches.suggestions[0]?.score >= 0.82 ? matches.suggestions[0].song : null);
+    const existing = library.some((entry) => findExistingAsset(entry, asset));
+    return { asset, song, title: song ? song.title : asset.inferredTitle, artist: "", action: existing ? "skip" : "add", replacement: -1, existing, reviewed: false };
+  });
 }
-
-async function chooseDuplicateTypeAction(song, asset) {
-  if (asset.type === "sheet") return false;
-
-  const sameType = (song.audio || []).some(
-    (track) => (track.type || "practice") === asset.type
-  );
-
-  if (!sameType) return false;
-
-  console.log("");
-  console.log(`${song.title} already has a ${asset.label}.`);
-  console.log("  [1] Add this as another track");
-  console.log("  [2] Replace the first track of this type");
-  console.log("  [3] Skip this file");
-  console.log("");
-
+function label(item) {
+  if (item.action === "skip") return item.existing ? "Already imported" : "Skipped";
+  const target = item.song ? item.song.title : `NEW: ${item.title}`;
+  const operation = item.replacement >= 0 ? `Replace #${item.replacement + 1}` : "Add";
+  return `${operation} ${shortType(item.asset)} → ${target}`;
+}
+function showQueue(queue) {
+  console.log("\n" + line());
+  console.log("  IMPORT QUEUE — nothing uploads until you choose Upload");
+  console.log(line());
+  queue.forEach((item, index) => {
+    if (item.existing && !item.reviewed) return;
+    console.log(`${index + 1}. ${item.asset.filename}`);
+    console.log(`   ${label(item)}${item.reviewed ? "" : "  [review suggested choice]"}`);
+  });
+  const hidden = queue.filter((item) => item.existing && !item.reviewed).length;
+  if (hidden) console.log(`\n${hidden} already imported file(s) hidden. Enter A to show them.`);
+  console.log("\nEnter a file number to edit, U to upload, A to show all, or Q to quit.");
+}
+async function choice(question, valid) {
   while (true) {
-    const answer = await ask("Your choice: ");
-    if (answer === "1") return false;
-    if (answer === "2") return true;
-    if (answer === "3") return "skip";
-    console.log("Please choose 1, 2, or 3.");
+    const answer = (await ask(question)).toLowerCase();
+    if (valid.includes(answer)) return answer;
+    console.log(`Choose ${valid.join(", ")}.`);
   }
 }
-
-async function importAsset({ asset, library, client, current, total }) {
-  printStep(current, total, asset.filename);
-  console.log(`Detected as: ${shortType(asset)}`);
-
-  const selection = await chooseSong(asset, library);
-
-  if (!selection) {
-    console.log("Result: Skipped by you.");
-    return { status: "skipped", filename: asset.filename };
+async function selectSong(item, library) {
+  const matches = findSongMatches(library, item.asset.filename, item.asset.type);
+  console.log("\nSuggested matches:");
+  matches.suggestions.filter((entry) => entry.score >= 0.45).forEach((entry, i) => console.log(`  ${i + 1}. ${entry.song.title} (${Math.round(entry.score * 100)}%)`));
+  console.log("  S. Search all songs    N. New song    B. Back");
+  while (true) {
+    const answer = (await ask("Song: ")).toLowerCase();
+    if (answer === "b") return;
+    if (answer === "n") {
+      const title = await ask(`Title [${item.asset.inferredTitle}]: `);
+      item.song = null;
+      item.title = title || item.asset.inferredTitle;
+      item.artist = await ask("Artist / composer (optional): ");
+      item.action = "add"; item.replacement = -1; return;
+    }
+    if (answer === "s") {
+      const query = (await ask("Search song title: ")).toLowerCase();
+      const found = library.filter((song) => song.title.toLowerCase().includes(query)).slice(0, 30);
+      if (!query || !found.length) { console.log("No matches. Try another search."); continue; }
+      found.forEach((song, i) => console.log(`  ${i + 1}. ${song.title}`));
+      const selected = Number(await ask("Number (Enter to cancel): "));
+      if (selected >= 1 && selected <= found.length) {
+        item.song = found[selected - 1]; item.title = item.song.title;
+        item.action = "add"; item.replacement = -1; return;
+      }
+      continue;
+    }
+    const suggested = matches.suggestions.filter((entry) => entry.score >= 0.45);
+    const selected = Number(answer);
+    if (selected >= 1 && selected <= suggested.length) {
+      item.song = suggested[selected - 1].song; item.title = item.song.title;
+      item.action = "add"; item.replacement = -1; return;
+    }
+    console.log("Choose a shown option.");
   }
-
-  let song = selection.song;
-
-  if (!song) {
-    song = await createNewSong(asset, library);
+}
+async function editItem(item, library) {
+  item.reviewed = true;
+  while (true) {
+    console.log(`\n${line("-")}\n${item.asset.filename}\n${label(item)}`);
+    console.log("  1. Choose song / edit new title and artist");
+    console.log("  2. Change file type or label");
+    console.log("  3. Add, replace an existing entry, or skip");
+    console.log("  B. Back to queue");
+    const answer = await choice("Edit: ", ["1", "2", "3", "b"]);
+    if (answer === "b") return;
+    if (answer === "1") await selectSong(item, library);
+    if (answer === "2") {
+      if (item.asset.type === "sheet") {
+        const types = [["sheet", "Sheet Music"], ["bass", "Bass"], ["guitar", "Guitar"], ["chords", "Chords"], ["lead", "Lead Sheet"]];
+        types.forEach(([type, name], i) => console.log(`  ${i + 1}. ${name}`));
+        const selected = await choice("Sheet type: ", ["1", "2", "3", "4", "5"]);
+        [item.asset.sheetType, item.asset.label] = types[Number(selected) - 1];
+        item.asset.label = (await ask(`Label [${item.asset.label}]: `)) || item.asset.label;
+      } else {
+        const types = [["practice", "Practice Track"], ["bass", "Bass Part"], ["drums", "Drums Part"], ["live", "Live Service"]];
+        types.forEach(([type, name], i) => console.log(`  ${i + 1}. ${name}`));
+        const selected = await choice("Audio type: ", ["1", "2", "3", "4"]);
+        [item.asset.type, item.asset.label] = types[Number(selected) - 1];
+        item.asset.folder = item.asset.type;
+        item.asset.label = (await ask(`Label [${item.asset.label}]: `)) || item.asset.label;
+      }
+      item.replacement = -1;
+    }
+    if (answer === "3") {
+      console.log("  A. Add another entry   R. Replace an existing entry   S. Skip");
+      const action = await choice("Action: ", ["a", "r", "s"]);
+      if (action === "s") { item.action = "skip"; item.replacement = -1; }
+      if (action === "a") { item.action = "add"; item.replacement = -1; }
+      if (action === "r") {
+        const entries = item.song ? sameKind(item.song, item.asset) : [];
+        if (!entries.length) { console.log("No entries of this type to replace. Choose a song and type first."); continue; }
+        entries.forEach((entry, i) => console.log(`  ${i + 1}. ${entry.label || "Unnamed"} — ${entry.file}`));
+        const selected = Number(await ask("Entry number (Enter to cancel): "));
+        if (selected >= 1 && selected <= entries.length) {
+          item.action = "add";
+          item.replacement = (item.asset.type === "sheet" ? item.song.documents : item.song.audio).indexOf(entries[selected - 1]);
+        }
+      }
+    }
   }
-
-  if (findExistingAsset(song, asset)) {
-    console.log("");
-    console.log("Result: This exact file is already in the library. Nothing changed.");
-    return { status: "skipped", filename: asset.filename, song: song.title, reason: "already imported" };
+}
+async function uploadQueue(queue, library) {
+  const active = queue.filter((item) => item.action === "add");
+  if (!active.length) { console.log("Nothing selected for upload."); return []; }
+  const pending = active.filter((item) => !item.reviewed);
+  if (pending.length) {
+    console.log(`\n${pending.length} suggested choice(s) have not been reviewed. Open each file before uploading.`);
+    return null;
   }
-
-  const duplicateAction = await chooseDuplicateTypeAction(song, asset);
-  if (duplicateAction === "skip") {
-    console.log("Result: Skipped by you.");
-    return { status: "skipped", filename: asset.filename, song: song.title };
+  const titles = new Map();
+  for (const item of active) {
+    if (item.song || !item.title.trim()) continue;
+    const key = makeId(item.title);
+    const existing = library.find((song) => song.id === key);
+    if (existing) { console.log(`\nNew song "${item.title}" conflicts with existing "${existing.title}". Edit its song choice.`); return null; }
+    if (!titles.has(key)) titles.set(key, item);
   }
-
-  const objectKey = `${asset.folder}/${asset.filename}`;
-
-  console.log("");
-  console.log("READY TO IMPORT");
-  console.log(`  Song:      ${song.title}`);
-  console.log(`  Type:      ${shortType(asset)}`);
-  console.log(`  R2 folder: ${asset.folder}/`);
-  console.log("");
-
-  const confirm = (await ask("Import this file? [Y/n]: ")).toLowerCase();
-  if (confirm === "n" || confirm === "no") {
-    console.log("Result: Skipped by you.");
-    return { status: "skipped", filename: asset.filename, song: song.title };
+  console.log("\nFINAL REVIEW");
+  active.forEach((item) => console.log(`  ${item.asset.filename} → ${label(item)}`));
+  if (await choice("Upload these files and update the library? [y/N]: ", ["y", "n", ""]) !== "y") return null;
+  const client = getR2Client();
+  const results = [];
+  const created = new Map();
+  for (const item of active) {
+    try {
+      let song = item.song;
+      if (!song) {
+        const id = makeId(item.title);
+        song = created.get(id);
+        if (!song) {
+          song = { id, title: item.title, composer: item.artist, tags: ["worship"], documents: [], audio: [] };
+          created.set(id, song);
+        }
+      }
+      if (findExistingAsset(song, item.asset)) { results.push({ status: "skipped", filename: item.asset.filename }); continue; }
+      const result = await uploadFile({ client, sourcePath: item.asset.fullPath, objectKey: `${item.asset.folder}/${item.asset.filename}`, overwrite: false });
+      if (!library.includes(song)) library.push(song);
+      const entries = item.asset.type === "sheet" ? (song.documents ||= []) : (song.audio ||= []);
+      if (item.replacement >= 0 && !item.song) throw new Error("Replacement requires an existing song");
+      if (item.replacement >= 0) {
+        const entry = entries[item.replacement];
+        if (!entry) throw new Error("The selected entry to replace is missing");
+        Object.assign(entry, item.asset.type === "sheet"
+          ? { label: item.asset.label, type: "pdf", sheetType: item.asset.sheetType, file: result.url }
+          : { label: item.asset.label, type: item.asset.type, file: result.url });
+      } else addOrUpdateSongAsset(song, { type: item.asset.type, label: item.asset.label, sheetType: item.asset.sheetType, publicUrl: result.url });
+      writeLibrary(library);
+      console.log(`  ✓ ${item.asset.filename} → ${song.title}`);
+      results.push({ status: "added", filename: item.asset.filename, song: song.title });
+    } catch (error) {
+      console.log(`  ! ${item.asset.filename}: ${error.message}`);
+      results.push({ status: "error", filename: item.asset.filename, error: error.message });
+    }
   }
-
-  console.log("Uploading to R2...");
-
-  const result = await uploadFile({
-    client,
-    sourcePath: asset.fullPath,
-    objectKey,
-    overwrite: false
-  });
-
-  addOrUpdateSongAsset(song, {
-    type: asset.type,
-    label: asset.label,
-    publicUrl: result.url,
-    replaceSameType: duplicateAction === true
-  });
-
-  // Keep the existing safe behavior: save the local library immediately
-  // after each successful file, so a later upload failure does not lose work.
-  writeLibrary(library);
-
-  console.log(
-    result.uploaded
-      ? "Result: Uploaded to R2 and added to the local library."
-      : "Result: File already existed in R2; library link was added locally."
-  );
-
-  return {
-    status: "added",
-    filename: asset.filename,
-    song: song.title,
-    uploaded: result.uploaded
-  };
+  return results;
 }
 
 function runGit(args, { capture = true } = {}) {
@@ -446,100 +323,30 @@ function printResults(results) {
 }
 
 async function main() {
-  printHeader();
-
+  console.log("CHURCH MUSIC IMPORTER\nScan → Edit queue → Upload → Publish\n");
+  console.log(`Inbox: ${CONFIG.inboxDir}\n`);
   const library = readLibrary();
   ensureTrackTypes(library);
   const assets = scanInbox();
-
-  if (!assets.length) {
-    console.log("No supported PDF/audio files were found in the inbox.");
-    console.log("");
-    await ask("Press Enter to close...");
-    rl.close();
-    return;
-  }
-
-  const { existing, actionable } = classifyAssets(assets, library);
-  printScanSummary(actionable, existing.length);
-
-  if (!actionable.length) {
-    console.log("");
-    await ask("Press Enter to close...");
-    rl.close();
-    return;
-  }
-
-  console.log("");
-  console.log("  [1] Review only the files shown above");
-  console.log("  [2] Exit without changing anything");
-  console.log("");
-
-  const start = await ask("Choose: ");
-  if (start !== "1") {
-    console.log("No changes made.");
-    rl.close();
-    return;
-  }
-
-  const client = getR2Client();
-  const results = [];
-
-  for (let index = 0; index < actionable.length; index += 1) {
-    const asset = actionable[index].asset;
-
-    try {
-      const result = await importAsset({
-        asset,
-        library,
-        client,
-        current: index + 1,
-        total: actionable.length
-      });
-      results.push(result);
-      if (index < actionable.length - 1) {
-        console.log("");
-        await pause();
-      }
-    } catch (error) {
-      console.error("");
-      console.error(`FAILED: ${asset.filename}`);
-      console.error(error.message);
-      results.push({
-        status: "error",
-        filename: asset.filename,
-        error: error.message
-      });
-      if (index < actionable.length - 1) {
-        console.log("");
-        await pause();
-      }
+  if (!assets.length) { console.log("No supported PDF or audio files in the inbox."); return; }
+  const queue = initialQueue(assets, library);
+  let showAll = false;
+  while (true) {
+    showQueue(showAll ? queue.map((item) => ({ ...item, reviewed: true })) : queue);
+    const answer = (await ask("Choose: ")).toLowerCase();
+    if (answer === "q") { console.log("No files uploaded."); return; }
+    if (answer === "a") { showAll = !showAll; continue; }
+    if (answer === "u") {
+      const results = await uploadQueue(queue, library);
+      if (results === null) continue;
+      printResults(results);
+      if (results.some((item) => item.status === "added")) await publishLibrary();
+      return;
     }
+    const index = Number(answer) - 1;
+    if (Number.isInteger(index) && index >= 0 && index < queue.length) await editItem(queue[index], library);
+    else console.log("Choose a file number, U, A, or Q.");
   }
-
-  printResults(results);
-  if (existing.length) {
-    console.log(`  Already present (hidden): ${existing.length}`);
-    console.log("");
-  }
-
-  if (results.some((item) => item.status === "added")) {
-    await publishLibrary();
-  } else {
-    console.log("No new library entries were added, so there is nothing to publish.");
-  }
-
-  console.log("");
-  await ask("Press Enter to close...");
-  rl.close();
 }
-
-main().catch(async (error) => {
-  console.error("");
-  console.error("Importer failed:");
-  console.error(error);
-
-  await ask("Press Enter to close...");
-  rl.close();
-  process.exitCode = 1;
-});
+main().catch((error) => { console.error(`\nImporter failed: ${error.message}`); process.exitCode = 1; })
+  .finally(async () => { await ask("\nPress Enter to close..."); rl.close(); });
