@@ -1529,5 +1529,91 @@ const musicLibrary = [
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Worthy%20of%20it%20All.mp3"
       }
     ]
+  },
+  {
+    "id": "all-hail-the-power-of-jesus-name",
+    "title": "All Hail the Power of Jesus' Name",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/All%20Hail%20the%20Power%20of%20Jesus'%20Name.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/All%20Hail%20the%20Power%20of%20Jesus'%20Name.mp3"
+      }
+    ]
+  },
+  {
+    "id": "nothing-but-the-blood-guitar-capo",
+    "title": "Nothing but the Blood (guitar capo)",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Nothing%20but%20the%20Blood%20(guitar%20capo).pdf"
+      }
+    ],
+    "audio": []
+  },
+  {
+    "id": "nothing-but-the-blood",
+    "title": "Nothing but the Blood",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Nothing%20but%20the%20Blood.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Nothing%20but%20the%20Blood.mp3"
+      }
+    ]
+  },
+  {
+    "id": "once-again",
+    "title": "Once Again",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Once%20Again.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Once%20Again.mp3"
+      }
+    ]
   }
 ];
