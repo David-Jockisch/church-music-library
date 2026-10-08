@@ -1553,7 +1553,6 @@ const musicLibrary = [
       }
     ]
   },
- 
   {
     "id": "nothing-but-the-blood",
     "title": "Nothing but the Blood",
@@ -1568,7 +1567,7 @@ const musicLibrary = [
         "sheetType": "sheet",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Nothing%20but%20the%20Blood.pdf"
       },
-        {
+      {
         "label": "Sheet Music",
         "type": "pdf",
         "sheetType": "sheet",
@@ -1603,6 +1602,75 @@ const musicLibrary = [
         "type": "practice",
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Once%20Again.mp3"
+      }
+    ]
+  },
+  {
+    "id": "come-and-let-your-presence",
+    "title": "Come and Let Your Presence",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Come%20and%20Let%20Your%20Presence.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Come%20and%20Let%20Your%20Presence.mp3"
+      }
+    ]
+  },
+  {
+    "id": "make-him-known",
+    "title": "Make Him Known",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Make%20Him%20Known.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Make%20Him%20Known.mp3"
+      }
+    ]
+  },
+  {
+    "id": "reign",
+    "title": "Reign",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Reign.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "type": "practice",
+        "label": "Practice Track",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Reign.mp3"
       }
     ]
   }
