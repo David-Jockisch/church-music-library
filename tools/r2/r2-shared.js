@@ -18,6 +18,8 @@ const CONFIG = {
     process.env.CHURCH_MUSIC_INBOX ||
     String.raw`C:\Users\david\iCloudDrive\church_music_library`,
 
+  sharedInboxDir: (process.env.CHURCH_MUSIC_SHARED_INBOX || "").trim(),
+
   libraryFile: path.join(REPO_ROOT, "js", "music-library.js"),
 
   r2: {
@@ -175,6 +177,13 @@ function detectSheetInfo(filename) {
       label,
       title: base.replace(pattern.regex, "").replace(/[\s\-–—_]+$/, "").trim()
     };
+  }
+
+  // A standalone capo suffix identifies a sheet variation, not a new song.
+  // Preserve the capo number/roman numeral in the document label.
+  const capo = base.match(/^(.*?)\s*(?:\(\s*capo\s+([ivxlcdm]+|\d+)\s*\)|[-–—_]\s*capo\s+([ivxlcdm]+|\d+))\s*$/i);
+  if (capo && capo[1].trim()) {
+    return { sheetType: "sheet", label: `Capo ${capo[2] || capo[3]}`, title: capo[1].trim() };
   }
 
   // Also recognize filenames such as "Song - Guitar Capo 2" where the
@@ -420,45 +429,27 @@ function findSongMatches(library, filename, detectedType) {
 }
 
 function scanInbox() {
-  if (!fs.existsSync(CONFIG.inboxDir)) {
-    throw new Error(
-      `Inbox folder does not exist:\n${CONFIG.inboxDir}`
-    );
-  }
-
-  return fs
-    .readdirSync(CONFIG.inboxDir, {
-      withFileTypes: true
-    })
-    .filter((entry) => entry.isFile())
-    .map((entry) => {
-      const classification =
-        detectTrackType(entry.name);
-
-      if (!classification) return null;
-
-      return {
+  const sources = [{ name: "My iCloud", dir: CONFIG.inboxDir }];
+  if (CONFIG.sharedInboxDir) sources.push({ name: "Shared iCloud", dir: CONFIG.sharedInboxDir });
+  const assets = [];
+  for (const source of sources) {
+    if (!fs.existsSync(source.dir) || !fs.statSync(source.dir).isDirectory()) {
+      throw new Error(`Cannot access ${source.name} folder:\n${source.dir}\nCheck the folder path and iCloud sync.`);
+    }
+    for (const entry of fs.readdirSync(source.dir, { withFileTypes: true })) {
+      if (!entry.isFile()) continue;
+      const classification = detectTrackType(entry.name);
+      if (!classification) continue;
+      assets.push({
         filename: entry.name,
-        fullPath: path.join(
-          CONFIG.inboxDir,
-          entry.name
-        ),
+        fullPath: path.join(source.dir, entry.name),
+        sourceName: source.name,
         ...classification,
-        inferredTitle:
-          canonicalTitleFromFilename(
-            entry.name,
-            classification.type
-          )
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) =>
-      a.filename.localeCompare(
-        b.filename,
-        undefined,
-        { sensitivity: "base" }
-      )
-    );
+        inferredTitle: canonicalTitleFromFilename(entry.name, classification.type)
+      });
+    }
+  }
+  return assets.sort((a, b) => a.filename.localeCompare(b.filename, undefined, { sensitivity: "base" }) || a.sourceName.localeCompare(b.sourceName));
 }
 
 async function objectExists(client, objectKey) {
