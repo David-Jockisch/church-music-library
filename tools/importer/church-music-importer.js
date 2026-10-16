@@ -31,10 +31,14 @@ function ask(question) {
 function line(char = "=", width = 68) { return char.repeat(width); }
 function shortType(asset) { return asset.type === "sheet" ? asset.label : asset.label; }
 function findExistingAsset(song, asset) {
-  const entries = asset.type === "sheet" ? song.documents || [] : song.audio || [];
+  // A user may have corrected the type/folder during a previous import.
+  // Recognize the inbox filename regardless of the folder used then.
+  const entries = [...(song.documents || []), ...(song.audio || [])];
   return entries.some((item) => {
-    try { return decodeURIComponent(new URL(item.file).pathname).endsWith(`/${asset.folder}/${asset.filename}`); }
-    catch { return false; }
+    try {
+      const filename = decodeURIComponent(new URL(item.file, "https://local.invalid").pathname.split("/").pop());
+      return filename === asset.filename;
+    } catch { return false; }
   });
 }
 function sameKind(song, asset) {
@@ -45,29 +49,38 @@ function sameKind(song, asset) {
 function initialQueue(assets, library) {
   return assets.map((asset) => {
     const matches = findSongMatches(library, asset.filename, asset.type);
-    const song = matches.exact?.song || (matches.suggestions[0]?.score >= 0.82 ? matches.suggestions[0].song : null);
+    const suggestion = matches.suggestions[0];
+    const song = matches.exact?.song || (suggestion?.score >= 0.82 ? suggestion.song : null);
     const existing = library.some((entry) => findExistingAsset(entry, asset));
-    return { asset, song, title: song ? song.title : asset.inferredTitle, artist: "", action: existing ? "skip" : "add", replacement: -1, existing, reviewed: false };
+    return { asset: { ...asset }, song, title: song ? song.title : asset.inferredTitle,
+      artist: "", action: existing ? "skip" : "add", replacement: -1, existing,
+      needsMatch: Boolean(song && !matches.exact), reviewed: false };
   });
 }
 function label(item) {
-  if (item.action === "skip") return item.existing ? "Already imported" : "Skipped";
-  const target = item.song ? item.song.title : `NEW: ${item.title}`;
-  const operation = item.replacement >= 0 ? `Replace #${item.replacement + 1}` : "Add";
-  return `${operation} ${shortType(item.asset)} → ${target}`;
+  if (item.action === "skip") return item.existing ? "Already imported" : "Skip this time";
+  const target = item.song ? item.song.title : item.title;
+  const operation = item.replacement >= 0 ? "Replace selected entry" : "Add";
+  return `${operation}: ${item.asset.label} -> ${target}${item.song ? "" : " (new song)"}${item.needsMatch ? " (confirm match)" : ""}`;
 }
-function showQueue(queue) {
+function showQueue(queue, showAll = false) {
+  const visible = queue.filter((item) => showAll || !item.existing);
   console.log("\n" + line());
-  console.log("  IMPORT QUEUE — nothing uploads until you choose Upload");
+  console.log("  NEW FILES FOUND IN ICLOUD");
   console.log(line());
-  queue.forEach((item, index) => {
-    if (item.existing && !item.reviewed) return;
-    console.log(`${index + 1}. ${item.asset.filename}`);
-    console.log(`   ${label(item)}${item.reviewed ? "" : "  [review suggested choice]"}`);
+  const ready = queue.filter((item) => !item.existing && item.action === "add");
+  const songs = new Set(ready.filter((item) => !item.song).map((item) => makeId(item.title)));
+  console.log(`  ${ready.length} new file(s), including ${songs.size} new song(s).`);
+  console.log(`  ${queue.filter((item) => item.existing).length} already imported file(s) hidden by default.\n`);
+  visible.forEach((item, index) => {
+    console.log(`  ${index + 1}. ${item.asset.filename}`);
+    console.log(`     ${label(item)}`);
   });
-  const hidden = queue.filter((item) => item.existing && !item.reviewed).length;
-  if (hidden) console.log(`\n${hidden} already imported file(s) hidden. Enter A to show them.`);
-  console.log("\nEnter a file number to edit, U to upload, A to show all, or Q to quit.");
+  if (!ready.length) console.log("\n  No new files to import.");
+  console.log("\n  [Enter] Import all new files");
+  console.log("  [number] Edit that file (optional)");
+  console.log("  [A] Show/hide already imported files   [P] Push & Submit   [Q] Quit");
+  return visible;
 }
 async function choice(question, valid) {
   while (true) {
@@ -89,7 +102,7 @@ async function selectSong(item, library) {
       item.song = null;
       item.title = title || item.asset.inferredTitle;
       item.artist = await ask("Artist / composer (optional): ");
-      item.action = "add"; item.replacement = -1; return;
+      item.action = "add"; item.replacement = -1; item.needsMatch = false; return;
     }
     if (answer === "s") {
       const query = (await ask("Search song title: ")).toLowerCase();
@@ -97,17 +110,17 @@ async function selectSong(item, library) {
       if (!query || !found.length) { console.log("No matches. Try another search."); continue; }
       found.forEach((song, i) => console.log(`  ${i + 1}. ${song.title}`));
       const selected = Number(await ask("Number (Enter to cancel): "));
-      if (selected >= 1 && selected <= found.length) {
+      if (Number.isInteger(selected) && selected >= 1 && selected <= found.length) {
         item.song = found[selected - 1]; item.title = item.song.title;
-        item.action = "add"; item.replacement = -1; return;
+        item.action = "add"; item.replacement = -1; item.needsMatch = false; return;
       }
       continue;
     }
     const suggested = matches.suggestions.filter((entry) => entry.score >= 0.45);
     const selected = Number(answer);
-    if (selected >= 1 && selected <= suggested.length) {
+    if (Number.isInteger(selected) && selected >= 1 && selected <= suggested.length) {
       item.song = suggested[selected - 1].song; item.title = item.song.title;
-      item.action = "add"; item.replacement = -1; return;
+      item.action = "add"; item.replacement = -1; item.needsMatch = false; return;
     }
     console.log("Choose a shown option.");
   }
@@ -116,13 +129,20 @@ async function editItem(item, library) {
   item.reviewed = true;
   while (true) {
     console.log(`\n${line("-")}\n${item.asset.filename}\n${label(item)}`);
-    console.log("  1. Choose song / edit new title and artist");
+    console.log("  1. Change song / new title and artist");
     console.log("  2. Change file type or label");
     console.log("  3. Add, replace an existing entry, or skip");
     console.log("  B. Back to queue");
     const answer = await choice("Edit: ", ["1", "2", "3", "b"]);
     if (answer === "b") return;
-    if (answer === "1") await selectSong(item, library);
+    if (answer === "1") {
+      const oldTitle = item.title;
+      await selectSong(item, library);
+      if (!item.song && item.title !== oldTitle) {
+        // Other files for this new song can be renamed together from main().
+        item.previousTitle = oldTitle;
+      }
+    }
     if (answer === "2") {
       if (item.asset.type === "sheet") {
         const types = [["sheet", "Sheet Music"], ["bass", "Bass"], ["guitar", "Guitar"], ["chords", "Chords"], ["lead", "Lead Sheet"]];
@@ -150,7 +170,7 @@ async function editItem(item, library) {
         if (!entries.length) { console.log("No entries of this type to replace. Choose a song and type first."); continue; }
         entries.forEach((entry, i) => console.log(`  ${i + 1}. ${entry.label || "Unnamed"} — ${entry.file}`));
         const selected = Number(await ask("Entry number (Enter to cancel): "));
-        if (selected >= 1 && selected <= entries.length) {
+        if (Number.isInteger(selected) && selected >= 1 && selected <= entries.length) {
           item.action = "add";
           item.replacement = (item.asset.type === "sheet" ? item.song.documents : item.song.audio).indexOf(entries[selected - 1]);
         }
@@ -161,39 +181,63 @@ async function editItem(item, library) {
 async function uploadQueue(queue, library) {
   const active = queue.filter((item) => item.action === "add");
   if (!active.length) { console.log("Nothing selected for upload."); return []; }
-  const pending = active.filter((item) => !item.reviewed);
-  if (pending.length) {
-    console.log(`\n${pending.length} suggested choice(s) have not been reviewed. Open each file before uploading.`);
-    return null;
+  // Only uncertain matches require a question. Exact matches and new
+  // titles use the scan's suggestions without opening an editor for each file.
+  const decisions = new Map();
+  for (const item of active.filter((entry) => entry.needsMatch)) {
+    const key = `${makeId(item.asset.inferredTitle)}:${item.song.id}`;
+    if (!decisions.has(key)) {
+      console.log(`\nIs "${item.asset.inferredTitle}" the song "${item.song.title}"?`);
+      console.log("  [Enter] Yes, add to that song   [N] No, create a new song   [E] Edit   [S] Skip");
+      const answer = await choice("Choose: ", ["", "y", "n", "e", "s"]);
+      if (answer === "e") { await selectSong(item, library); return null; }
+      decisions.set(key, answer);
+    }
+    const decision = decisions.get(key);
+    if (decision === "n") { item.song = null; item.title = item.asset.inferredTitle; }
+    if (decision === "s") item.action = "skip";
+    item.needsMatch = false;
   }
-  const titles = new Map();
-  for (const item of active) {
-    if (item.song || !item.title.trim()) continue;
-    const key = makeId(item.title);
-    const existing = library.find((song) => song.id === key);
-    if (existing) { console.log(`\nNew song "${item.title}" conflicts with existing "${existing.title}". Edit its song choice.`); return null; }
-    if (!titles.has(key)) titles.set(key, item);
+  const selected = active.filter((item) => item.action === "add");
+  if (!selected.length) return [];
+  for (const item of selected) {
+    if (!item.song && !makeId(item.title)) {
+      console.log(`Please enter a title for ${item.asset.filename}.`);
+      return null;
+    }
+    if (!item.song) {
+      const key = makeId(item.title);
+      const existing = library.find((song) => song.id === key);
+      if (existing) {
+        console.log(`"${item.title}" is already a song. Choose it in the file editor before importing.`);
+        return null;
+      }
+    }
+    if (item.replacement >= 0 && (!item.song || !(item.asset.type === "sheet" ? item.song.documents : item.song.audio)?.[item.replacement])) {
+      console.log(`Please choose an existing entry to replace for ${item.asset.filename}.`);
+      return null;
+    }
   }
-  console.log("\nFINAL REVIEW");
-  active.forEach((item) => console.log(`  ${item.asset.filename} → ${label(item)}`));
-  if (await choice("Upload these files and update the library? [y/N]: ", ["y", "n", ""]) !== "y") return null;
+  console.log(`\nUploading ${selected.length} file(s)...`);
   const client = getR2Client();
   const results = [];
   const created = new Map();
-  for (const item of active) {
+  for (const item of selected) {
     try {
       let song = item.song;
       if (!song) {
         const id = makeId(item.title);
         song = created.get(id);
         if (!song) {
-          song = { id, title: item.title, composer: item.artist, tags: ["worship"], documents: [], audio: [] };
+          const artist = selected.find((entry) => !entry.song && makeId(entry.title) === id && entry.artist)?.artist || "";
+          song = { id, title: item.title, composer: artist, tags: ["worship"], documents: [], audio: [] };
           created.set(id, song);
         }
       }
-      if (findExistingAsset(song, item.asset)) { results.push({ status: "skipped", filename: item.asset.filename }); continue; }
+      if (library.some((entry) => findExistingAsset(entry, item.asset))) { results.push({ status: "skipped", filename: item.asset.filename }); continue; }
       const result = await uploadFile({ client, sourcePath: item.asset.fullPath, objectKey: `${item.asset.folder}/${item.asset.filename}`, overwrite: false });
-      if (!library.includes(song)) library.push(song);
+      const wasNew = !library.includes(song);
+      const previous = JSON.parse(JSON.stringify(song));
       const entries = item.asset.type === "sheet" ? (song.documents ||= []) : (song.audio ||= []);
       if (item.replacement >= 0 && !item.song) throw new Error("Replacement requires an existing song");
       if (item.replacement >= 0) {
@@ -203,7 +247,13 @@ async function uploadQueue(queue, library) {
           ? { label: item.asset.label, type: "pdf", sheetType: item.asset.sheetType, file: result.url }
           : { label: item.asset.label, type: item.asset.type, file: result.url });
       } else addOrUpdateSongAsset(song, { type: item.asset.type, label: item.asset.label, sheetType: item.asset.sheetType, publicUrl: result.url });
-      writeLibrary(library);
+      if (wasNew) library.push(song);
+      try { writeLibrary(library); }
+      catch (error) {
+        if (wasNew) library.splice(library.indexOf(song), 1);
+        Object.assign(song, previous);
+        throw error;
+      }
       console.log(`  ✓ ${item.asset.filename} → ${song.title}`);
       results.push({ status: "added", filename: item.asset.filename, song: song.title });
     } catch (error) {
@@ -226,7 +276,9 @@ function getGitState() {
   try {
     const branch = runGit(["branch", "--show-current"]).trim() || "main";
     const libraryStatus = runGit(["status", "--short", "--", "js/music-library.js"]).trim();
-    return { available: true, branch, libraryChanged: Boolean(libraryStatus) };
+    let ahead = false;
+    try { ahead = Number(runGit(["rev-list", "--count", "@{upstream}..HEAD"]).trim()) > 0; } catch {}
+    return { available: true, branch, libraryChanged: Boolean(libraryStatus), ahead };
   } catch (error) {
     return {
       available: false,
@@ -245,14 +297,14 @@ async function publishLibrary() {
     return { status: "failed" };
   }
 
-  if (!state.libraryChanged) {
+  if (!state.libraryChanged && !state.ahead) {
     console.log("");
     console.log("There are no new music-library changes to push.");
     return { status: "nothing" };
   }
 
   console.log("");
-  console.log("PUBLISH TO GITHUB");
+  console.log("PUSH & SUBMIT");
   console.log(line("-"));
   console.log("This will only stage js/music-library.js.");
   console.log("Other files you may be working on will NOT be included.");
@@ -267,6 +319,7 @@ async function publishLibrary() {
 
   try {
     console.log("");
+    if (state.libraryChanged) {
     console.log("1/3  Saving library change to Git...");
     runGit(["add", "--", "js/music-library.js"]);
 
@@ -275,10 +328,11 @@ async function publishLibrary() {
       runGit(["commit", "-m", "Update church music library", "--", "js/music-library.js"], { capture: false });
     } catch (error) {
       // If the staged file is identical to HEAD, there is simply nothing to commit.
-      const staged = runGit(["diff", "--cached", "--name-only"]).trim();
+      const staged = runGit(["diff", "--cached", "--name-only", "--", "js/music-library.js"]).trim();
       if (staged) throw error;
     }
 
+    }
     console.log("3/3  Pushing to GitHub...");
     runGit(["push", "origin", state.branch], { capture: false });
 
@@ -323,30 +377,44 @@ function printResults(results) {
 }
 
 async function main() {
-  console.log("CHURCH MUSIC IMPORTER\nScan → Edit queue → Upload → Publish\n");
-  console.log(`Inbox: ${CONFIG.inboxDir}\n`);
+  console.log("CHURCH MUSIC IMPORTER\nCheck iCloud -> Import new files -> Push & Submit\n");
+  console.log(`Checking: ${CONFIG.inboxDir}`);
   const library = readLibrary();
   ensureTrackTypes(library);
   const assets = scanInbox();
-  if (!assets.length) { console.log("No supported PDF or audio files in the inbox."); return; }
   const queue = initialQueue(assets, library);
   let showAll = false;
   while (true) {
-    showQueue(showAll ? queue.map((item) => ({ ...item, reviewed: true })) : queue);
-    const answer = (await ask("Choose: ")).toLowerCase();
-    if (answer === "q") { console.log("No files uploaded."); return; }
+    const visible = showQueue(queue, showAll);
+    const answer = (await ask("Choose [Enter to import]: ")).toLowerCase();
+    if (answer === "q") { console.log("Closed without importing."); return; }
     if (answer === "a") { showAll = !showAll; continue; }
-    if (answer === "u") {
+    if (answer === "p") { await publishLibrary(); continue; }
+    if (answer === "" || answer === "u") {
+      if (!queue.some((item) => item.action === "add")) { console.log("Everything is up to date. Choose Q to close."); continue; }
       const results = await uploadQueue(queue, library);
       if (results === null) continue;
       printResults(results);
       if (results.some((item) => item.status === "added")) await publishLibrary();
+      if (results.some((item) => item.status === "error")) console.log("Run the importer again to retry failed files. Successful files will be skipped automatically.");
       return;
     }
-    const index = Number(answer) - 1;
-    if (Number.isInteger(index) && index >= 0 && index < queue.length) await editItem(queue[index], library);
-    else console.log("Choose a file number, U, A, or Q.");
+    const number = Number(answer);
+    if (/^\d+$/.test(answer) && number >= 1 && number <= visible.length) {
+      const item = visible[number - 1];
+      await editItem(item, library);
+      if (item.previousTitle) {
+        const related = queue.filter((entry) => entry !== item && !entry.song && !entry.existing && makeId(entry.title) === makeId(item.previousTitle));
+        if (related.length && await choice(`Use "${item.title}" for the other ${related.length} file(s) of this song? [Y/n]: `, ["", "y", "n"]) !== "n") {
+          related.forEach((entry) => { entry.title = item.title; entry.artist = item.artist; });
+        }
+        delete item.previousTitle;
+      }
+    } else console.log("Press Enter to import, a file number to edit, or Q to quit.");
   }
 }
-main().catch((error) => { console.error(`\nImporter failed: ${error.message}`); process.exitCode = 1; })
-  .finally(async () => { await ask("\nPress Enter to close..."); rl.close(); });
+if (require.main === module) {
+  main().catch((error) => { console.error(`\nImporter failed: ${error.message}`); process.exitCode = 1; })
+    .finally(async () => { await ask("\nPress Enter to close..."); rl.close(); });
+}
+module.exports = { initialQueue, findExistingAsset, showQueue, uploadQueue, main };
