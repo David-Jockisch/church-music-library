@@ -50,7 +50,7 @@ const audioSeek = document.getElementById("audioSeek");
 const currentTime = document.getElementById("currentTime");
 const durationTime = document.getElementById("durationTime");
 
-const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const alphabet = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")];
 
 let activePdfDocument = null;
 let activePdfResource = null;
@@ -81,7 +81,7 @@ let pinchStartZoom = 1;
 let liveMusicLibrary = [...musicLibrary];
 
 let sortedLibrary = [...liveMusicLibrary].sort((a, b) =>
-  a.title.localeCompare(b.title, undefined, { sensitivity: "base" })
+  a.title.localeCompare(b.title, undefined, { sensitivity: "base", numeric: true })
 );
 
 function loadWeeklyPlayset() {
@@ -422,7 +422,7 @@ function renderLibrary(query = "") {
 
   matches.forEach((song) => {
     const letter = song.title.charAt(0).toUpperCase();
-    const key = /[A-Z]/.test(letter) ? letter : "#";
+    const key = /^[A-Z]$/.test(letter) ? letter : "#";
 
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push(song);
@@ -430,7 +430,7 @@ function renderLibrary(query = "") {
 
   renderAlphabetNav(new Set(grouped.keys()));
 
-  songList.innerHTML = [...grouped.entries()].map(([letter, songs]) => `
+  songList.innerHTML = [...grouped.entries()].sort(([a], [b]) => alphabet.indexOf(a) - alphabet.indexOf(b)).map(([letter, songs]) => `
     <section id="letter-${letter}" class="letter-section">
       <h2 class="letter-heading">${letter}</h2>
 
@@ -1195,7 +1195,7 @@ async function refreshLibrary() {
     liveMusicLibrary = result.library;
 
     sortedLibrary = [...liveMusicLibrary].sort((a, b) =>
-      a.title.localeCompare(b.title, undefined, { sensitivity: "base" })
+      a.title.localeCompare(b.title, undefined, { sensitivity: "base", numeric: true })
     );
 
     renderLibrary(searchInput.value);

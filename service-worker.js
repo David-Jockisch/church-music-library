@@ -1,4 +1,4 @@
-const CACHE_NAME = "church-music-library-v1-4-sheet-picker";
+const CACHE_NAME = "church-music-library-v1-5-numbered-titles";
 
 const APP_SHELL = [
   "./",
