@@ -1674,7 +1674,6 @@ const musicLibrary = [
       }
     ]
   },
-
   {
     "id": "10-000-reasons",
     "title": "10,000 Reasons",
@@ -1724,6 +1723,52 @@ const musicLibrary = [
         "type": "practice",
         "label": "Practice Track",
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Amazing%20Grace%20(My%20Chains%20are%20Gone).mp3"
+      }
+    ]
+  },
+  {
+    "id": "god-so-loved",
+    "title": "God So Loved",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/God%20So%20Loved.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "label": "Practice Track",
+        "type": "practice",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/God%20So%20Loved.mp3"
+      }
+    ]
+  },
+  {
+    "id": "the-wonderful-cross",
+    "title": "The Wonderful Cross",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/The%20Wonderful%20Cross.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "label": "Practice Track",
+        "type": "practice",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/The%20Wonderful%20Cross.mp3"
       }
     ]
   }
