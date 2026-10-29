@@ -1771,5 +1771,28 @@ const musicLibrary = [
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/The%20Wonderful%20Cross.mp3"
       }
     ]
+  },
+  {
+    "id": "great-are-you-lord",
+    "title": "Great Are You Lord",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Great%20are%20You%20Lord.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "label": "Practice Track",
+        "type": "practice",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Great%20Are%20You%20Lord.mp3"
+      }
+    ]
   }
 ];
