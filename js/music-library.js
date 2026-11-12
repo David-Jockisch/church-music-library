@@ -1794,5 +1794,51 @@ const musicLibrary = [
         "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Great%20Are%20You%20Lord.mp3"
       }
     ]
+  },
+  {
+    "id": "a-thousand-tongues",
+    "title": "A Thousand Tongues",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/A%20Thousand%20Tongues.pdf"
+      }
+    ],
+    "audio": [
+      {
+        "label": "Practice Track",
+        "type": "practice",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/A%20Thousand%20Tongues.mp3"
+      }
+    ]
+  },
+  {
+    "id": "lord-i-need-you-g",
+    "title": "Lord I Need You (G)",
+    "composer": "",
+    "tags": [
+      "worship"
+    ],
+    "documents": [
+      {
+        "label": "Sheet Music",
+        "type": "pdf",
+        "sheetType": "sheet",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/sheet/Lord%20I%20Need%20You%20(2).pdf"
+      }
+    ],
+    "audio": [
+      {
+        "label": "Practice Track",
+        "type": "practice",
+        "file": "https://pub-fcbcb37da7bd41788225327bfdc11248.r2.dev/practice/Lord%20I%20Need%20You%20(2).mp3"
+      }
+    ]
   }
 ];
